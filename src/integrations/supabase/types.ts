@@ -14,16 +14,212 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      expert_profiles: {
+        Row: {
+          bio: string | null
+          created_at: string
+          credentials: string | null
+          headline: string | null
+          markets: string[] | null
+          subscription_price: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          credentials?: string | null
+          headline?: string | null
+          markets?: string[] | null
+          subscription_price?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          credentials?: string | null
+          headline?: string | null
+          markets?: string[] | null
+          subscription_price?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          asset: string | null
+          content: string
+          created_at: string
+          expert_id: string
+          id: string
+          market: string | null
+          timeframe: string | null
+          updated_at: string
+          visibility: Database["public"]["Enums"]["post_visibility"]
+        }
+        Insert: {
+          asset?: string | null
+          content: string
+          created_at?: string
+          expert_id: string
+          id?: string
+          market?: string | null
+          timeframe?: string | null
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["post_visibility"]
+        }
+        Update: {
+          asset?: string | null
+          content?: string
+          created_at?: string
+          expert_id?: string
+          id?: string
+          market?: string | null
+          timeframe?: string | null
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["post_visibility"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          expert_id: string
+          id: string
+          investor_id: string
+          status: Database["public"]["Enums"]["subscription_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expert_id: string
+          id?: string
+          investor_id: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expert_id?: string
+          id?: string
+          investor_id?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["user_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_expert: { Args: { _user_id: string }; Returns: boolean }
+      is_investor: { Args: { _user_id: string }; Returns: boolean }
+      is_subscribed: {
+        Args: { _expert_id: string; _investor_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      post_visibility: "public" | "private"
+      subscription_status: "active" | "pending" | "cancelled" | "expired"
+      user_role: "investor" | "expert"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +346,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      post_visibility: ["public", "private"],
+      subscription_status: ["active", "pending", "cancelled", "expired"],
+      user_role: ["investor", "expert"],
+    },
   },
 } as const
