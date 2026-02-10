@@ -75,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName,
+          role: role,
         }
       }
     });
@@ -83,28 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error };
     }
 
-    // If signup successful and we have a user, insert the role
+    // Role and expert_profile are now created automatically by the database trigger
     if (data.user) {
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({ user_id: data.user.id, role });
-
-      if (roleError) {
-        console.error('Error setting user role:', roleError);
-        return { error: roleError as unknown as Error };
-      }
-
-      // If expert, create expert profile
-      if (role === 'expert') {
-        const { error: expertError } = await supabase
-          .from('expert_profiles')
-          .insert({ user_id: data.user.id });
-
-        if (expertError) {
-          console.error('Error creating expert profile:', expertError);
-        }
-      }
-
       setUserRole(role);
     }
 
