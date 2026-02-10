@@ -9,6 +9,8 @@ import ExpertsDirectory from "./pages/ExpertsDirectory";
 import ExpertPage from "./pages/ExpertPage";
 import InsightsPage from "./pages/InsightsPage";
 import AuthPage from "./pages/AuthPage";
+import ExpertDashboard from "./pages/ExpertDashboard";
+import InvestorFeed from "./pages/InvestorFeed";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +28,8 @@ const App = () => (
             <Route path="/expert/:id" element={<ExpertPage />} />
             <Route path="/insights" element={<InsightsPage />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/dashboard" element={<ExpertDashboard />} />
+            <Route path="/my-feed" element={<InvestorFeed />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
