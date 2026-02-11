@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Expert, markets } from "@/data/mockData";
-import { ArrowRight, Users } from "lucide-react";
+import { ArrowRight, Users, Star } from "lucide-react";
 
 interface ExpertCardProps {
   expert: Expert;
@@ -35,14 +35,14 @@ const ExpertCard = ({ expert, variant = "default" }: ExpertCardProps) => {
                 {expert.credentials}
               </p>
             </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <Star className="h-3.5 w-3.5 text-accent fill-accent" />
+              <span className="text-xs font-medium text-foreground">{expert.rating}</span>
+            </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {marketNames.map((market) => (
-              <Badge
-                key={market}
-                variant="secondary"
-                className="text-xs px-2 py-0.5"
-              >
+              <Badge key={market} variant="secondary" className="text-xs px-2 py-0.5">
                 {market}
               </Badge>
             ))}
@@ -67,20 +67,19 @@ const ExpertCard = ({ expert, variant = "default" }: ExpertCardProps) => {
             <h4 className="font-display font-semibold text-lg text-foreground">
               {expert.name}
             </h4>
-            <p className="text-sm text-muted-foreground">
-              {expert.credentials}
-            </p>
+            <p className="text-sm text-muted-foreground">{expert.credentials}</p>
+            <div className="mt-1 flex items-center gap-1">
+              <Star className="h-3.5 w-3.5 text-accent fill-accent" />
+              <span className="text-xs font-medium text-foreground">{expert.rating}</span>
+              <span className="text-xs text-muted-foreground">({expert.ratingCount})</span>
+            </div>
           </div>
         </div>
 
         {/* Markets */}
         <div className="mt-4 flex flex-wrap gap-1.5">
           {marketNames.map((market) => (
-            <Badge
-              key={market}
-              variant="secondary"
-              className="text-xs font-medium"
-            >
+            <Badge key={market} variant="secondary" className="text-xs font-medium">
               {market}
             </Badge>
           ))}
@@ -107,9 +106,7 @@ const ExpertCard = ({ expert, variant = "default" }: ExpertCardProps) => {
             {expert.subscriptionPrice ? (
               <p className="font-display font-semibold text-foreground">
                 ${expert.subscriptionPrice}
-                <span className="text-sm font-normal text-muted-foreground">
-                  /month
-                </span>
+                <span className="text-sm font-normal text-muted-foreground">/month</span>
               </p>
             ) : (
               <Badge className="bg-success/10 text-success border-success/20 hover:bg-success/20">

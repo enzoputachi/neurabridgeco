@@ -45,6 +45,12 @@ const Header = () => {
           >
             Insights
           </Link>
+          <Link
+            to="/marketplace"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Marketplace
+          </Link>
           {user && userRole === 'expert' && (
             <Link
               to="/dashboard"
@@ -124,6 +130,13 @@ const Header = () => {
               onClick={() => setMobileMenuOpen(false)}
             >
               Insights
+            </Link>
+            <Link
+              to="/marketplace"
+              className="text-sm font-medium text-foreground"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Marketplace
             </Link>
             {user && userRole === 'expert' && (
               <Link
