@@ -33,8 +33,24 @@ import {
   Trash2,
   Save,
   X,
+  BarChart3,
+  DollarSign,
+  Star,
 } from "lucide-react";
 import { format } from "date-fns";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+import { mockAnalytics } from "@/data/mockData";
 
 const MARKET_OPTIONS = [
   { value: "stocks", label: "Stocks", icon: "📈" },
@@ -219,6 +235,9 @@ const ExpertDashboard = () => {
     );
   }
 
+  const totalEarnings = mockAnalytics.monthlyEarnings.reduce((sum, m) => sum + m.earnings, 0);
+  const latestMonthEarnings = mockAnalytics.monthlyEarnings[mockAnalytics.monthlyEarnings.length - 1].earnings;
+
   return (
     <Layout>
       <div className="container py-8 md:py-12">
@@ -228,7 +247,7 @@ const ExpertDashboard = () => {
               Expert Dashboard
             </h1>
             <p className="mt-1 text-muted-foreground">
-              Manage your profile and publish insights
+              Manage your profile, insights, and analytics
             </p>
           </div>
           <Button onClick={() => setShowPostForm(true)}>
@@ -238,7 +257,7 @@ const ExpertDashboard = () => {
         </div>
 
         {/* Stats Row */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-3">
+        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardContent className="flex items-center gap-4 p-6">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
@@ -264,20 +283,33 @@ const ExpertDashboard = () => {
           <Card>
             <CardContent className="flex items-center gap-4 p-6">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-success/10">
-                <TrendingUp className="h-6 w-6 text-success" />
+                <DollarSign className="h-6 w-6 text-success" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">
-                  {profile?.subscription_price ? `$${profile.subscription_price}` : "Free"}
-                </p>
-                <p className="text-sm text-muted-foreground">Subscription Price</p>
+                <p className="text-2xl font-bold text-foreground">${latestMonthEarnings.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">This Month</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-warning/10">
+                <Star className="h-6 w-6 text-warning" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">{mockAnalytics.overallRating}</p>
+                <p className="text-sm text-muted-foreground">Overall Rating</p>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs defaultValue="posts" className="space-y-6">
+        <Tabs defaultValue="analytics" className="space-y-6">
           <TabsList>
+            <TabsTrigger value="analytics">
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Analytics
+            </TabsTrigger>
             <TabsTrigger value="posts">
               <FileText className="mr-2 h-4 w-4" />
               Posts
@@ -288,9 +320,136 @@ const ExpertDashboard = () => {
             </TabsTrigger>
           </TabsList>
 
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6">
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Monthly Earnings */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-success" />
+                    Monthly Earnings
+                  </CardTitle>
+                  <CardDescription>
+                    Total: ${totalEarnings.toLocaleString()} over 6 months
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={mockAnalytics.monthlyEarnings}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                      <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `$${v}`} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px",
+                          color: "hsl(var(--foreground))",
+                        }}
+                        formatter={(value: number) => [`$${value}`, "Earnings"]}
+                      />
+                      <Bar dataKey="earnings" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Subscriber & Follower Growth */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    Growth
+                  </CardTitle>
+                  <CardDescription>Subscribers & followers over time</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={mockAnalytics.subscriberGrowth}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                      <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px",
+                          color: "hsl(var(--foreground))",
+                        }}
+                      />
+                      <Legend />
+                      <Line type="monotone" dataKey="subscribers" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
+                      <Line type="monotone" dataKey="followers" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ r: 3 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Rating Breakdown */}
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Star className="h-5 w-5 text-accent" />
+                    Rating Breakdown
+                  </CardTitle>
+                  <CardDescription>
+                    {mockAnalytics.overallRating} average from {mockAnalytics.totalRatings} ratings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-8">
+                    {/* Big rating */}
+                    <div className="text-center shrink-0">
+                      <p className="font-display text-5xl font-bold text-foreground">
+                        {mockAnalytics.overallRating}
+                      </p>
+                      <div className="mt-2 flex justify-center gap-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-5 w-5 ${
+                              i < Math.round(mockAnalytics.overallRating)
+                                ? "text-accent fill-accent"
+                                : "text-muted-foreground/30"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {mockAnalytics.totalRatings} ratings
+                      </p>
+                    </div>
+                    {/* Bars */}
+                    <div className="flex-1 space-y-2">
+                      {mockAnalytics.ratingBreakdown.map((row) => {
+                        const pct = (row.count / mockAnalytics.totalRatings) * 100;
+                        return (
+                          <div key={row.stars} className="flex items-center gap-3">
+                            <span className="text-sm text-muted-foreground w-12 text-right">
+                              {row.stars} star
+                            </span>
+                            <div className="flex-1 h-3 rounded-full bg-muted overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-accent transition-all"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="text-sm text-muted-foreground w-10">
+                              {row.count}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
           {/* Posts Tab */}
           <TabsContent value="posts" className="space-y-4">
-            {/* New Post Form */}
             {showPostForm && (
               <Card className="border-primary/20">
                 <CardHeader>
@@ -392,7 +551,6 @@ const ExpertDashboard = () => {
               </Card>
             )}
 
-            {/* Posts List */}
             {posts.length > 0 ? (
               posts.map((post) => {
                 const market = MARKET_OPTIONS.find((m) => m.value === post.market);
