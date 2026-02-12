@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut, MessageSquare, User } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import logoImage from "@/assets/logo.png";
+import NotificationBell from "@/components/NotificationBell";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -70,12 +71,20 @@ const Header = () => {
         </nav>
 
         {/* Desktop Auth Buttons */}
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-2 md:flex">
           {user ? (
             <>
-              <span className="text-sm text-muted-foreground">
-                {user.email}
-              </span>
+              <NotificationBell />
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/messages">
+                  <MessageSquare className="h-5 w-5" />
+                </Link>
+              </Button>
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/profile">
+                  <User className="h-5 w-5" />
+                </Link>
+              </Button>
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
@@ -159,7 +168,21 @@ const Header = () => {
             <div className="flex flex-col gap-2 pt-4 border-t border-border">
               {user ? (
                 <>
-                  <span className="text-sm text-muted-foreground px-1">
+                  <Link
+                    to="/messages"
+                    className="text-sm font-medium text-foreground"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Messages
+                  </Link>
+                  <Link
+                    to="/profile"
+                    className="text-sm font-medium text-foreground"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Profile Settings
+                  </Link>
+                  <span className="text-sm text-muted-foreground px-1 mt-2">
                     {user.email}
                   </span>
                   <Button variant="outline" onClick={handleSignOut} className="w-full">

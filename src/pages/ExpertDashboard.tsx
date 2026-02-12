@@ -36,6 +36,8 @@ import {
   BarChart3,
   DollarSign,
   Star,
+  ImagePlus,
+  UserCheck,
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -50,7 +52,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { mockAnalytics } from "@/data/mockData";
+import { mockAnalytics, mockSubscribers } from "@/data/mockData";
 
 const MARKET_OPTIONS = [
   { value: "stocks", label: "Stocks", icon: "📈" },
@@ -106,6 +108,7 @@ const ExpertDashboard = () => {
   const [postMarket, setPostMarket] = useState("");
   const [postTimeframe, setPostTimeframe] = useState("");
   const [postVisibility, setPostVisibility] = useState<"public" | "private">("public");
+  const [postImageUrl, setPostImageUrl] = useState("");
 
   useEffect(() => {
     if (!authLoading && (!user || userRole !== "expert")) {
@@ -241,7 +244,7 @@ const ExpertDashboard = () => {
   return (
     <Layout>
       <div className="container py-8 md:py-12">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground">
               Expert Dashboard
@@ -305,7 +308,7 @@ const ExpertDashboard = () => {
         </div>
 
         <Tabs defaultValue="analytics" className="space-y-6">
-          <TabsList>
+          <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="analytics">
               <BarChart3 className="mr-2 h-4 w-4" />
               Analytics
@@ -314,9 +317,13 @@ const ExpertDashboard = () => {
               <FileText className="mr-2 h-4 w-4" />
               Posts
             </TabsTrigger>
+            <TabsTrigger value="subscribers">
+              <UserCheck className="mr-2 h-4 w-4" />
+              Subscribers
+            </TabsTrigger>
             <TabsTrigger value="profile">
               <Settings className="mr-2 h-4 w-4" />
-              Profile Settings
+              Profile
             </TabsTrigger>
           </TabsList>
 
@@ -510,6 +517,23 @@ const ExpertDashboard = () => {
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <ImagePlus className="h-4 w-4" />
+                      Image URL (optional)
+                    </Label>
+                    <Input
+                      placeholder="https://example.com/chart-screenshot.png"
+                      value={postImageUrl}
+                      onChange={(e) => setPostImageUrl(e.target.value)}
+                    />
+                    {postImageUrl && (
+                      <div className="rounded-lg overflow-hidden border border-border">
+                        <img src={postImageUrl} alt="Preview" className="w-full h-32 object-cover" />
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex items-center justify-between rounded-lg border border-border p-4">
                     <div className="flex items-center gap-3">
                       {postVisibility === "public" ? (
@@ -612,6 +636,35 @@ const ExpertDashboard = () => {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          {/* Subscribers Tab */}
+          <TabsContent value="subscribers" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <UserCheck className="h-5 w-5 text-primary" />
+                  Your Subscribers ({mockSubscribers.length})
+                </CardTitle>
+                <CardDescription>People subscribed to your premium insights</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {mockSubscribers.map((sub) => (
+                    <div key={sub.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <img src={sub.avatar} alt={sub.name} className="h-10 w-10 rounded-full object-cover" />
+                        <div>
+                          <p className="font-medium text-foreground text-sm">{sub.name}</p>
+                          <p className="text-xs text-muted-foreground">Since {format(new Date(sub.subscribedAt), "MMM d, yyyy")}</p>
+                        </div>
+                      </div>
+                      <Badge variant="secondary" className="text-xs">{sub.plan}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Profile Tab */}

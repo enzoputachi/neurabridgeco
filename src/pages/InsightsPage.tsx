@@ -67,6 +67,18 @@ const InsightCard = ({ post }: { post: Post }) => {
           </Badge>
         </div>
 
+        {/* Image */}
+        {post.image && (
+          <div className="mt-4 rounded-lg overflow-hidden">
+            <img
+              src={post.image}
+              alt={post.asset}
+              className="w-full h-48 object-cover"
+              loading="lazy"
+            />
+          </div>
+        )}
+
         {/* Content */}
         <p className="mt-4 text-foreground leading-relaxed">{post.content}</p>
 

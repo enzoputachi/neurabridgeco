@@ -29,6 +29,8 @@ import {
   Video,
   Zap,
   ArrowRight,
+  Heart,
+  MessageSquare,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -212,8 +214,10 @@ const CourseCard = ({ item }: { item: MarketplaceItem }) => {
           ) : (
             <Badge className="bg-success/10 text-success border-success/20">Free</Badge>
           )}
-          <Button variant="ghost" size="sm" className="text-primary">
-            View <ArrowRight className="ml-1 h-3 w-3" />
+          <Button variant="ghost" size="sm" className="text-primary" asChild>
+            <Link to={`/marketplace/${item.id}`}>
+              View <ArrowRight className="ml-1 h-3 w-3" />
+            </Link>
           </Button>
         </div>
       </CardContent>
@@ -227,6 +231,7 @@ const ExpertPage = () => {
   const posts = getPostsByExpertId(id || "");
   const courses = getMarketplaceByExpertId(id || "");
   const isSubscribed = false;
+  const [isFollowing, setIsFollowing] = useState(false);
 
   if (!expert) {
     return (
@@ -419,7 +424,23 @@ const ExpertPage = () => {
                     <Button className="w-full" size="lg">
                       {expert.subscriptionPrice
                         ? "Subscribe for Private Insights"
-                        : "Follow for Free"}
+                        : "Subscribe for Free"}
+                    </Button>
+
+                    <Button
+                      variant={isFollowing ? "secondary" : "outline"}
+                      className="w-full mt-2"
+                      onClick={() => setIsFollowing(!isFollowing)}
+                    >
+                      <Heart className={`mr-2 h-4 w-4 ${isFollowing ? "fill-current" : ""}`} />
+                      {isFollowing ? "Following" : "Follow"}
+                    </Button>
+
+                    <Button variant="outline" className="w-full mt-2" asChild>
+                      <Link to="/messages">
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Send Message
+                      </Link>
                     </Button>
 
                     <p className="mt-3 text-xs text-center text-muted-foreground">
