@@ -195,9 +195,11 @@ const MarketplacePage = () => {
                         Free
                       </Badge>
                     )}
-                    <Button variant="ghost" size="sm" className="text-primary">
-                      View Details
-                      <ArrowRight className="ml-1 h-4 w-4" />
+                    <Button variant="ghost" size="sm" className="text-primary" asChild>
+                      <Link to={`/marketplace/${item.id}`}>
+                        View Details
+                        <ArrowRight className="ml-1 h-4 w-4" />
+                      </Link>
                     </Button>
                   </div>
                 </CardContent>

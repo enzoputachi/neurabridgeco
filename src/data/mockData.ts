@@ -456,3 +456,60 @@ export const getTrendingExperts = (): Expert[] => {
 export const getPublicPosts = (): Post[] => {
   return mockPosts.filter((post) => post.isPublic);
 };
+
+export const getMarketplaceItemById = (id: string): MarketplaceItem | undefined => {
+  return mockMarketplaceItems.find((item) => item.id === id);
+};
+
+export interface AppNotification {
+  id: string;
+  type: "follow" | "subscribe" | "message" | "rating" | "new_post";
+  title: string;
+  description: string;
+  createdAt: string;
+  read: boolean;
+}
+
+export interface MockMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar: string;
+  receiverId: string;
+  receiverName: string;
+  content: string;
+  createdAt: string;
+  read: boolean;
+}
+
+export interface MockSubscriber {
+  id: string;
+  name: string;
+  avatar: string;
+  subscribedAt: string;
+  plan: string;
+}
+
+export const mockNotifications: AppNotification[] = [
+  { id: "n1", type: "subscribe", title: "New Subscriber", description: "Alex Turner subscribed to your premium insights", createdAt: "2024-01-15T10:00:00Z", read: false },
+  { id: "n2", type: "follow", title: "New Follower", description: "Maria Santos started following you", createdAt: "2024-01-15T08:00:00Z", read: false },
+  { id: "n3", type: "rating", title: "New Rating", description: "Your NVDA analysis received a 5-star rating", createdAt: "2024-01-14T16:00:00Z", read: true },
+  { id: "n4", type: "message", title: "New Message", description: "Jordan Lee sent you a message", createdAt: "2024-01-14T12:00:00Z", read: true },
+  { id: "n5", type: "new_post", title: "New Insight", description: "Sarah Chen published a new analysis on AAPL", createdAt: "2024-01-14T09:00:00Z", read: true },
+];
+
+export const mockMessages: MockMessage[] = [
+  { id: "m1", senderId: "inv1", senderName: "Alex Turner", senderAvatar: "https://images.unsplash.com/photo-1599566150163-29194dcabd9c?w=150&h=150&fit=crop&crop=face", receiverId: "1", receiverName: "Sarah Chen", content: "Great analysis on NVDA! What are your thoughts on AMD?", createdAt: "2024-01-15T10:30:00Z", read: false },
+  { id: "m2", senderId: "1", senderName: "Sarah Chen", senderAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face", receiverId: "inv1", receiverName: "Alex Turner", content: "AMD is interesting but I prefer NVDA's AI moat. Will cover in my next post.", createdAt: "2024-01-15T11:00:00Z", read: true },
+  { id: "m3", senderId: "inv2", senderName: "Maria Santos", senderAvatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop&crop=face", receiverId: "1", receiverName: "Sarah Chen", content: "Do you offer 1-on-1 consultations?", createdAt: "2024-01-14T15:00:00Z", read: true },
+  { id: "m4", senderId: "inv3", senderName: "Jordan Lee", senderAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face", receiverId: "2", receiverName: "Marcus Webb", content: "When do you think BTC will break $100k?", createdAt: "2024-01-15T08:00:00Z", read: false },
+  { id: "m5", senderId: "2", senderName: "Marcus Webb", senderAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face", receiverId: "inv3", receiverName: "Jordan Lee", content: "On-chain metrics suggest Q2. Stay patient.", createdAt: "2024-01-15T09:00:00Z", read: true },
+];
+
+export const mockSubscribers: MockSubscriber[] = [
+  { id: "inv1", name: "Alex Turner", avatar: "https://images.unsplash.com/photo-1599566150163-29194dcabd9c?w=150&h=150&fit=crop&crop=face", subscribedAt: "2024-01-01T00:00:00Z", plan: "$29/mo" },
+  { id: "inv2", name: "Maria Santos", avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop&crop=face", subscribedAt: "2023-12-15T00:00:00Z", plan: "$29/mo" },
+  { id: "inv3", name: "Jordan Lee", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face", subscribedAt: "2023-11-20T00:00:00Z", plan: "$29/mo" },
+  { id: "inv4", name: "Chris Blake", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face", subscribedAt: "2024-01-10T00:00:00Z", plan: "$29/mo" },
+  { id: "inv5", name: "Ryan Cooper", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face", subscribedAt: "2023-10-05T00:00:00Z", plan: "$29/mo" },
+];
