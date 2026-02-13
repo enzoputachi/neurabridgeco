@@ -52,7 +52,9 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { mockAnalytics, mockSubscribers } from "@/data/mockData";
+import { mockAnalytics } from "@/data/mockData";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { SubscribersListCard } from "@/components/experts/SubscribersListCard";
 
 const MARKET_OPTIONS = [
   { value: "stocks", label: "Stocks", icon: "📈" },
@@ -200,7 +202,8 @@ const ExpertDashboard = () => {
       market: postMarket || null,
       timeframe: postTimeframe || null,
       visibility: postVisibility,
-    });
+      image_url: postImageUrl || null,
+    } as any);
 
     setCreatingPost(false);
 
@@ -213,6 +216,7 @@ const ExpertDashboard = () => {
       setPostMarket("");
       setPostTimeframe("");
       setPostVisibility("public");
+      setPostImageUrl("");
       setShowPostForm(false);
       fetchData();
     }
@@ -640,31 +644,7 @@ const ExpertDashboard = () => {
 
           {/* Subscribers Tab */}
           <TabsContent value="subscribers" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <UserCheck className="h-5 w-5 text-primary" />
-                  Your Subscribers ({mockSubscribers.length})
-                </CardTitle>
-                <CardDescription>People subscribed to your premium insights</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {mockSubscribers.map((sub) => (
-                    <div key={sub.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-3">
-                        <img src={sub.avatar} alt={sub.name} className="h-10 w-10 rounded-full object-cover" />
-                        <div>
-                          <p className="font-medium text-foreground text-sm">{sub.name}</p>
-                          <p className="text-xs text-muted-foreground">Since {format(new Date(sub.subscribedAt), "MMM d, yyyy")}</p>
-                        </div>
-                      </div>
-                      <Badge variant="secondary" className="text-xs">{sub.plan}</Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <SubscribersListCard userId={user?.id || ""} />
           </TabsContent>
 
           {/* Profile Tab */}
