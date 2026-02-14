@@ -83,26 +83,8 @@ const Header = () => {
           )}
         </div>
 
-        {/* Mobile: icons + hamburger */}
+        {/* Mobile: hamburger only */}
         <div className="flex items-center gap-1 md:hidden">
-          {user && (
-            <>
-              <NotificationBell />
-              <Button variant="ghost" size="icon" asChild>
-                <Link to="/messages"><MessageSquare className="h-5 w-5" /></Link>
-              </Button>
-              <Button variant="ghost" size="icon" className="rounded-full" asChild>
-                <Link to="/profile">
-                  <Avatar className="h-7 w-7 border border-border">
-                    <AvatarImage src={avatarUrl || undefined} />
-                    <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
-                      {(fullName || user.email || "?").charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Link>
-              </Button>
-            </>
-          )}
           <button
             className="flex items-center justify-center rounded-md p-2"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -125,6 +107,23 @@ const Header = () => {
             )}
             {user && userRole === 'investor' && (
               <Link to="/my-feed" className="text-sm font-medium text-foreground" onClick={() => setMobileMenuOpen(false)}>My Feed</Link>
+            )}
+            {user && (
+              <div className="flex items-center gap-3 pt-2 border-t border-border">
+                <Link to="/messages" className="flex items-center gap-2 text-sm font-medium text-foreground" onClick={() => setMobileMenuOpen(false)}>
+                  <MessageSquare className="h-4 w-4" /> Messages
+                </Link>
+                <span className="text-border">|</span>
+                <Link to="/profile" className="flex items-center gap-2 text-sm font-medium text-foreground" onClick={() => setMobileMenuOpen(false)}>
+                  <Avatar className="h-6 w-6 border border-border">
+                    <AvatarImage src={avatarUrl || undefined} />
+                    <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
+                      {(fullName || user.email || "?").charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  Profile
+                </Link>
+              </div>
             )}
             <div className="flex flex-col gap-2 pt-4 border-t border-border">
               {user ? (
