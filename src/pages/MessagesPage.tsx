@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Inbox, ArrowLeft, Loader2 } from "lucide-react";
+import { Send, Inbox, ArrowLeft, Loader2, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface Conversation {
@@ -202,6 +202,9 @@ const MessagesPage = () => {
       toast({ variant: "destructive", title: "Error", description: error.message });
     } else {
       setNewMessage("");
+      // Immediately refetch thread messages for instant display
+      await fetchThreadMessages(selectedThread);
+      fetchConversations();
       // Create notification for receiver
       await supabase.from("notifications").insert({
         user_id: selectedThread,
@@ -210,6 +213,20 @@ const MessagesPage = () => {
         description: "You received a new message",
       });
     }
+  };
+
+  const handleDeleteConversation = async (partnerId: string) => {
+    if (!user) return;
+    // Delete all messages in this conversation
+    await supabase.from("messages").delete().or(
+      `and(sender_id.eq.${user.id},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${user.id})`
+    );
+    setConversations((prev) => prev.filter((c) => c.partnerId !== partnerId));
+    if (selectedThread === partnerId) {
+      setSelectedThread(null);
+      setThreadMessages([]);
+    }
+    toast({ title: "Conversation deleted" });
   };
 
   const selectedPartner = selectedThread ? partnerProfiles[selectedThread] : null;
@@ -234,29 +251,41 @@ const MessagesPage = () => {
             <CardContent className="p-0">
               {conversations.length > 0 ? (
                 conversations.map((conv) => (
-                  <button
+                  <div
                     key={conv.partnerId}
-                    onClick={() => setSelectedThread(conv.partnerId)}
-                    className={`w-full flex items-center gap-3 p-4 border-b border-border last:border-0 hover:bg-muted/50 transition-colors text-left ${selectedThread === conv.partnerId ? "bg-primary/5" : ""}`}
+                    className={`flex items-center gap-3 p-4 border-b border-border last:border-0 hover:bg-muted/50 transition-colors ${selectedThread === conv.partnerId ? "bg-primary/5" : ""}`}
                   >
-                    <Avatar className="h-10 w-10 border border-border">
-                      <AvatarImage src={conv.partnerAvatar || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                        {conv.partnerName.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium text-sm text-foreground">{conv.partnerName}</p>
-                        {conv.unread > 0 && (
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                            {conv.unread}
-                          </span>
-                        )}
+                    <button
+                      onClick={() => setSelectedThread(conv.partnerId)}
+                      className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                    >
+                      <Avatar className="h-10 w-10 border border-border shrink-0">
+                        <AvatarImage src={conv.partnerAvatar || undefined} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                          {conv.partnerName.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-sm text-foreground">{conv.partnerName}</p>
+                          {conv.unread > 0 && (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                              {conv.unread}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate mt-1">{conv.lastMessage}</p>
                       </div>
-                      <p className="text-xs text-muted-foreground truncate mt-1">{conv.lastMessage}</p>
-                    </div>
-                  </button>
+                    </button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0 text-muted-foreground hover:text-destructive h-8 w-8"
+                      onClick={(e) => { e.stopPropagation(); handleDeleteConversation(conv.partnerId); }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 ))
               ) : (
                 <div className="p-8 text-center">

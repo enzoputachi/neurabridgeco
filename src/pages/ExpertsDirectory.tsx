@@ -226,54 +226,62 @@ const ExpertsDirectory = () => {
                 }
 
                 return (
-                  <Card key={expert.id} className="group overflow-hidden transition-all duration-300 hover:shadow-large hover:-translate-y-1 h-full flex flex-col">
-                    <CardContent className="p-6 flex flex-col flex-1">
-                      <div className="flex items-start gap-4">
-                        <Avatar className="h-14 w-14 border-2 border-border ring-2 ring-primary/10">
-                          <AvatarImage src={expert.avatar_url || undefined} alt={expert.full_name || ""} />
-                          <AvatarFallback className="bg-primary/10 text-primary font-semibold text-lg">
-                            {(expert.full_name || "?").charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-display font-semibold text-lg text-foreground">{expert.full_name || "Expert"}</h4>
-                          <p className="text-sm text-muted-foreground">{expert.credentials || ""}</p>
-                        </div>
-                      </div>
-                      <div className="mt-4 flex flex-wrap gap-1.5">
-                        {marketNames.map((market) => (
-                          <Badge key={market?.value} variant="secondary" className="text-xs font-medium">{market?.label}</Badge>
-                        ))}
-                      </div>
-                      {expert.headline && (
-                        <p className="mt-4 text-sm text-foreground line-clamp-2 flex-1">"{expert.headline}"</p>
-                      )}
-                      <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Users className="h-3.5 w-3.5" />
-                          <span>{expert.subscriber_count} subscribers</span>
-                        </div>
-                        <span>•</span>
-                        <span>{expert.post_count} insights</span>
-                      </div>
-                      <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
-                        <div>
-                          {expert.subscription_price && expert.subscription_price > 0 ? (
-                            <p className="font-display font-semibold text-foreground">
-                              ${expert.subscription_price}<span className="text-sm font-normal text-muted-foreground">/month</span>
-                            </p>
-                          ) : (
-                            <Badge className="bg-success/10 text-success border-success/20 hover:bg-success/20">Free</Badge>
+                  <Link key={expert.id} to={`/expert/${expert.id}`} className="block h-full">
+                    <Card className="group overflow-hidden transition-all duration-300 hover:shadow-large hover:-translate-y-1 h-full flex flex-col bg-gradient-to-br from-card to-card/80">
+                      <CardContent className="p-0 flex flex-col flex-1">
+                        {/* Top accent bar */}
+                        <div className="h-1.5 bg-gradient-to-r from-primary/60 via-primary to-primary/60" />
+                        <div className="p-5 flex flex-col flex-1">
+                          {/* Avatar centered */}
+                          <div className="flex flex-col items-center text-center">
+                            <Avatar className="h-16 w-16 border-2 border-primary/20 ring-2 ring-primary/10 shadow-md">
+                              <AvatarImage src={expert.avatar_url || undefined} alt={expert.full_name || ""} />
+                              <AvatarFallback className="bg-primary/10 text-primary font-semibold text-lg">
+                                {(expert.full_name || "?").charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <h4 className="mt-3 font-display font-bold text-base text-foreground">{expert.full_name || "Expert"}</h4>
+                            {expert.credentials && (
+                              <p className="text-xs text-muted-foreground mt-0.5">{expert.credentials}</p>
+                            )}
+                          </div>
+
+                          {/* Markets */}
+                          <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                            {marketNames.map((market) => (
+                              <Badge key={market?.value} variant="secondary" className="text-xs px-2 py-0.5">{market?.icon} {market?.label}</Badge>
+                            ))}
+                          </div>
+
+                          {/* Headline */}
+                          {expert.headline && (
+                            <p className="mt-3 text-sm text-muted-foreground italic text-center line-clamp-2 flex-1">"{expert.headline}"</p>
                           )}
+
+                          {/* Stats row */}
+                          <div className="mt-auto pt-3 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Users className="h-3.5 w-3.5 text-primary" />
+                              <span>{expert.subscriber_count}</span>
+                            </div>
+                            <span className="text-border">|</span>
+                            <span>{expert.post_count} insights</span>
+                          </div>
+
+                          {/* Price */}
+                          <div className="mt-3 pt-3 border-t border-border flex items-center justify-center">
+                            {expert.subscription_price && expert.subscription_price > 0 ? (
+                              <p className="font-display font-bold text-primary text-lg">
+                                ${expert.subscription_price}<span className="text-sm font-normal text-muted-foreground">/mo</span>
+                              </p>
+                            ) : (
+                              <Badge className="bg-success/10 text-success border-success/20 hover:bg-success/20 px-3 py-1">Free</Badge>
+                            )}
+                          </div>
                         </div>
-                        <Button variant="ghost" size="sm" className="group/btn text-primary hover:text-primary" asChild>
-                          <Link to={`/expert/${expert.id}`}>
-                            View Expert <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" />
-                          </Link>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 );
               })}
             </div>
