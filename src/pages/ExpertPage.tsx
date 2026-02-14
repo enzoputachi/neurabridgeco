@@ -7,6 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -390,9 +395,33 @@ const ExpertPage = () => {
 
                     {!isSelf && (
                       <>
-                        <Button className="w-full" size="lg" onClick={handleSubscribe} variant={isSubscribed ? "secondary" : "default"}>
-                          {isSubscribed ? <><CheckCircle2 className="mr-2 h-4 w-4" />Unsubscribe</> : expert.subscription_price ? "Subscribe for Private Insights" : "Subscribe for Free"}
-                        </Button>
+                        {isSubscribed ? (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button className="w-full" size="lg" variant="secondary">
+                                <CheckCircle2 className="mr-2 h-4 w-4" />Unsubscribe
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Unsubscribe from {expert.full_name || "this expert"}?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  You will lose access to all private insights. You can re-subscribe anytime.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleSubscribe} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                  Confirm Unsubscribe
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        ) : (
+                          <Button className="w-full" size="lg" onClick={handleSubscribe}>
+                            {expert.subscription_price ? "Subscribe for Private Insights" : "Subscribe for Free"}
+                          </Button>
+                        )}
 
                         <Button variant={isFollowing ? "secondary" : "outline"} className="w-full mt-2" onClick={handleFollow}>
                           <Heart className={`mr-2 h-4 w-4 ${isFollowing ? "fill-current" : ""}`} />

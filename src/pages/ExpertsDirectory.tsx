@@ -231,11 +231,11 @@ const ExpertsDirectory = () => {
                       {/* Top accent bar */}
                       <div className="h-1 bg-gradient-to-r from-primary/40 via-primary to-primary/40" />
                       <div className="p-5 flex flex-col flex-1">
-                        {/* Avatar + Info */}
+                        {/* Large Avatar */}
                         <div className="flex flex-col items-center text-center">
-                          <Avatar className="h-20 w-20 border-2 border-primary/20 ring-2 ring-primary/10 shadow-md">
-                            <AvatarImage src={expert.avatar_url || undefined} alt={expert.full_name || ""} className="object-cover" />
-                            <AvatarFallback className="bg-primary/10 text-primary font-semibold text-2xl">
+                          <Avatar className="h-24 w-24 border-3 border-primary/20 ring-2 ring-primary/10 shadow-lg">
+                            <AvatarImage src={expert.avatar_url || undefined} alt={expert.full_name || ""} />
+                            <AvatarFallback className="bg-primary/10 text-primary font-bold text-3xl">
                               {(expert.full_name || "?").charAt(0)}
                             </AvatarFallback>
                           </Avatar>
@@ -269,7 +269,7 @@ const ExpertsDirectory = () => {
                           <span>{expert.post_count} insights</span>
                         </div>
 
-                        {/* Price */}
+                        {/* Price + View Expert */}
                         <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
                           <div>
                             {expert.subscription_price && expert.subscription_price > 0 ? (
