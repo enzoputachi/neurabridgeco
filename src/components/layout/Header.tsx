@@ -40,7 +40,7 @@ const Header = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center gap-4 lg:gap-6 xl:gap-8 lg:flex">
           <Link to="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Home</Link>
           <Link to="/experts" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Experts</Link>
           <Link to="/insights" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Insights</Link>
@@ -54,7 +54,7 @@ const Header = () => {
         </nav>
 
         {/* Desktop Auth */}
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-1.5 lg:flex">
           {user ? (
             <>
               <NotificationBell />
@@ -84,7 +84,7 @@ const Header = () => {
         </div>
 
         {/* Mobile: icons + hamburger */}
-        <div className="flex items-center gap-0.5 md:hidden">
+        <div className="flex items-center gap-0.5 lg:hidden">
           {user && (
             <>
               <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
@@ -113,7 +113,7 @@ const Header = () => {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="border-t border-border bg-background md:hidden">
+        <div className="border-t border-border bg-background lg:hidden">
           <nav className="container flex flex-col gap-4 py-4">
             <Link to="/" className="text-sm font-medium text-foreground" onClick={() => setMobileMenuOpen(false)}>Home</Link>
             <Link to="/experts" className="text-sm font-medium text-foreground" onClick={() => setMobileMenuOpen(false)}>Experts</Link>
