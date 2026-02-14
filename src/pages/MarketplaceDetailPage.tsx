@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
+import CourseDetailedDisplay from "@/components/marketplace/CourseDetailedDisplay";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -208,32 +209,7 @@ const MarketplaceDetailPage = () => {
               <p className="mt-4 text-muted-foreground leading-relaxed">{item.description}</p>
             </div>
 
-            {/* Detailed Content (optional) */}
-            {item.detailed_content && (
-              <>
-                <Separator />
-                <div>
-                  <h2 className="font-display text-lg font-semibold text-foreground mb-4">Course Details</h2>
-                  <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                    {item.detailed_content}
-                  </div>
-                </div>
-              </>
-            )}
-
-            <Separator />
-
-            <div>
-              <h2 className="font-display text-lg font-semibold text-foreground mb-4">What You'll Learn</h2>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {["Market analysis fundamentals", "Risk management strategies", "Technical & fundamental frameworks", "Real-time trade examples", "Portfolio construction", "Exit strategy planning"].map((point, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
-                    <p className="text-sm text-foreground">{point}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <CourseDetailedDisplay detailedContent={item.detailed_content} />
 
             <Separator />
 
