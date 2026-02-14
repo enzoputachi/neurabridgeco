@@ -1,4 +1,6 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -9,13 +11,9 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import Layout from "@/components/layout/Layout";
-import ExpertCard from "@/components/experts/ExpertCard";
-import {
-  mockExperts,
-  getFeaturedExperts,
-  getTrendingExperts,
-  markets,
-} from "@/data/mockData";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { markets } from "@/data/mockData";
 import {
   ArrowRight,
   TrendingUp,
@@ -23,11 +21,79 @@ import {
   Shield,
   Sparkles,
   ChevronRight,
+  Star,
+  BookOpen,
+  Globe,
+  Lock,
 } from "lucide-react";
+import { format } from "date-fns";
+
+interface ExpertRow {
+  user_id: string;
+  headline: string | null;
+  markets: string[] | null;
+  subscription_price: number | null;
+  profiles: { full_name: string | null; avatar_url: string | null } | null;
+  subscriber_count?: number;
+  follower_count?: number;
+}
+
+interface PostRow {
+  id: string;
+  content: string;
+  asset: string | null;
+  market: string | null;
+  timeframe: string | null;
+  visibility: string;
+  created_at: string;
+  image_url: string | null;
+  expert_id: string;
+  profiles: { full_name: string | null; avatar_url: string | null } | null;
+}
+
+interface MarketplaceRow {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  price: number;
+  image_url: string | null;
+  expert_id: string;
+  profiles: { full_name: string | null; avatar_url: string | null } | null;
+}
 
 const Index = () => {
-  const featuredExperts = getFeaturedExperts();
-  const trendingExperts = getTrendingExperts();
+  const [experts, setExperts] = useState<ExpertRow[]>([]);
+  const [posts, setPosts] = useState<PostRow[]>([]);
+  const [marketplaceItems, setMarketplaceItems] = useState<MarketplaceRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const [expertsRes, postsRes, itemsRes] = await Promise.all([
+        supabase
+          .from("expert_profiles")
+          .select("user_id, headline, markets, subscription_price, profiles(full_name, avatar_url)")
+          .limit(8),
+        supabase
+          .from("posts")
+          .select("id, content, asset, market, timeframe, visibility, created_at, image_url, expert_id, profiles:expert_id(full_name, avatar_url)")
+          .eq("visibility", "public")
+          .order("created_at", { ascending: false })
+          .limit(6),
+        supabase
+          .from("marketplace_items")
+          .select("id, title, description, type, price, image_url, expert_id, profiles:expert_id(full_name, avatar_url)")
+          .order("created_at", { ascending: false })
+          .limit(4),
+      ]);
+      setExperts((expertsRes.data as any[]) || []);
+      setPosts((postsRes.data as any[]) || []);
+      setMarketplaceItems((itemsRes.data as any[]) || []);
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
 
   return (
     <Layout>
@@ -38,32 +104,21 @@ const Index = () => {
           <div className="mx-auto max-w-3xl text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5">
               <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">
-                Expert Market Insights
-              </span>
+              <span className="text-sm font-medium text-primary">Expert Market Insights</span>
             </div>
             <h1 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
               Discover market experts.{" "}
-              <span className="text-primary">
-                Get insights before the market moves.
-              </span>
+              <span className="text-primary">Get insights before the market moves.</span>
             </h1>
             <p className="mt-6 text-lg text-muted-foreground md:text-xl">
-              Connect with trusted analysts across stocks, crypto, forex, and
-              more. Subscribe to their insights and stay ahead of market
-              movements.
+              Connect with trusted analysts across stocks, crypto, forex, and more. Subscribe to their insights and stay ahead of market movements.
             </p>
             <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Button size="lg" className="px-8" asChild>
-                <Link to="/experts">
-                  Browse Experts
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
+                <Link to="/experts">Browse Experts <ArrowRight className="ml-2 h-4 w-4" /></Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link to="/auth?mode=signup&role=expert">
-                  Become an Expert
-                </Link>
+                <Link to="/auth?mode=signup&role=expert">Become an Expert</Link>
               </Button>
             </div>
           </div>
@@ -74,299 +129,186 @@ const Index = () => {
       <section className="py-16 md:py-24">
         <div className="container">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">
-              What is NeuraBridge?
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              A discovery platform connecting retail investors with market
-              experts across all asset classes.
-            </p>
+            <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">What is NeuraBridge?</h2>
+            <p className="mt-4 text-lg text-muted-foreground">A discovery platform connecting retail investors with market experts across all asset classes.</p>
           </div>
-
           <div className="mt-12 grid gap-6 md:grid-cols-3">
-            <Card className="bg-card/50 border-border/50">
-              <CardContent className="pt-6">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <TrendingUp className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="mt-4 font-display text-lg font-semibold text-foreground">
-                  Expert Insights
-                </h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Access curated market analysis from verified experts with
-                  proven track records across multiple asset classes.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card/50 border-border/50">
-              <CardContent className="pt-6">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <Users className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="mt-4 font-display text-lg font-semibold text-foreground">
-                  Direct Subscriptions
-                </h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Subscribe directly to experts you trust. Get their private
-                  insights delivered straight to your dashboard.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card/50 border-border/50">
-              <CardContent className="pt-6">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <Shield className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="mt-4 font-display text-lg font-semibold text-foreground">
-                  Educational Content
-                </h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  All content is for educational purposes. No trading execution
-                  or financial advice—just pure market intelligence.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="border-y border-border bg-muted/30 py-16 md:py-24">
-        <div className="container">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">
-              How It Works
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Get started in minutes, whether you're an investor or an expert.
-            </p>
-          </div>
-
-          <div className="mt-12 grid gap-8 md:grid-cols-2">
-            {/* For Investors */}
-            <Card className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="bg-primary/5 p-6">
-                  <h3 className="font-display text-xl font-bold text-foreground">
-                    For Investors
-                  </h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Find experts you trust and subscribe to their insights.
-                  </p>
-                </div>
-                <div className="p-6 space-y-4">
-                  <div className="flex gap-4">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold text-sm">
-                      1
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">
-                        Browse experts by market
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Explore stocks, crypto, forex, bonds, and commodities.
-                      </p>
-                    </div>
+            {[
+              { icon: TrendingUp, title: "Expert Insights", desc: "Access curated market analysis from verified experts with proven track records across multiple asset classes." },
+              { icon: Users, title: "Direct Subscriptions", desc: "Subscribe directly to experts you trust. Get their private insights delivered straight to your dashboard." },
+              { icon: Shield, title: "Educational Content", desc: "All content is for educational purposes. No trading execution or financial advice—just pure market intelligence." },
+            ].map((item) => (
+              <Card key={item.title} className="bg-card/50 border-border/50">
+                <CardContent className="pt-6">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                    <item.icon className="h-6 w-6 text-primary" />
                   </div>
-                  <div className="flex gap-4">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold text-sm">
-                      2
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">
-                        Subscribe to unlock insights
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Get access to private posts and recommendations.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold text-sm">
-                      3
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">
-                        Stay informed with your feed
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        All your subscriptions in one dashboard.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* For Experts */}
-            <Card className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="bg-accent/10 p-6">
-                  <h3 className="font-display text-xl font-bold text-foreground">
-                    For Experts
-                  </h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Share your expertise and build a subscriber base.
-                  </p>
-                </div>
-                <div className="p-6 space-y-4">
-                  <div className="flex gap-4">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground font-semibold text-sm">
-                      1
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">
-                        Create your expert profile
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Showcase your credentials and markets.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground font-semibold text-sm">
-                      2
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">
-                        Publish insights & analysis
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Post public teasers and private deep-dives.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground font-semibold text-sm">
-                      3
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">
-                        Grow your audience
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Earn recurring revenue from subscribers.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Experts */}
-      <section className="py-16 md:py-24">
-        <div className="container">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">
-                Featured Experts
-              </h2>
-              <p className="mt-1 text-muted-foreground">
-                Top-rated analysts across all markets
-              </p>
-            </div>
-            <Button variant="ghost" className="hidden sm:flex" asChild>
-              <Link to="/experts">
-                View all
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="mt-8">
-            <Carousel
-              opts={{
-                align: "start",
-                loop: true,
-              }}
-              className="w-full"
-            >
-              <CarouselContent className="-ml-4">
-                {featuredExperts.map((expert) => (
-                  <CarouselItem
-                    key={expert.id}
-                    className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3"
-                  >
-                    <ExpertCard expert={expert} />
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="hidden md:flex -left-4" />
-              <CarouselNext className="hidden md:flex -right-4" />
-            </Carousel>
-          </div>
-
-          <div className="mt-6 flex justify-center sm:hidden">
-            <Button variant="outline" asChild>
-              <Link to="/experts">
-                View all experts
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Trending Experts */}
-      <section className="border-t border-border bg-muted/20 py-16 md:py-24">
-        <div className="container">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">
-                Trending This Week
-              </h2>
-              <p className="mt-1 text-muted-foreground">
-                Experts gaining traction right now
-              </p>
-            </div>
-            <Button variant="ghost" className="hidden sm:flex" asChild>
-              <Link to="/experts">
-                View all
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {trendingExperts.slice(0, 4).map((expert) => (
-              <ExpertCard key={expert.id} expert={expert} variant="compact" />
+                  <h3 className="mt-4 font-display text-lg font-semibold text-foreground">{item.title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{item.desc}</p>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Popular Markets */}
-      <section className="py-16 md:py-24">
+      {/* Featured Experts from DB */}
+      {experts.length > 0 && (
+        <section className="py-16 md:py-24">
+          <div className="container">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">Featured Experts</h2>
+                <p className="mt-1 text-muted-foreground">Top analysts across all markets</p>
+              </div>
+              <Button variant="ghost" className="hidden sm:flex" asChild>
+                <Link to="/experts">View all <ChevronRight className="ml-1 h-4 w-4" /></Link>
+              </Button>
+            </div>
+            <div className="mt-8">
+              <Carousel opts={{ align: "start", loop: true }} className="w-full">
+                <CarouselContent className="-ml-4">
+                  {experts.map((expert) => (
+                    <CarouselItem key={expert.user_id} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
+                      <Link to={`/expert/${expert.user_id}`}>
+                        <Card className="h-full transition-all hover:shadow-lg hover:-translate-y-1">
+                          <CardContent className="p-5">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-12 w-12">
+                                <AvatarImage src={expert.profiles?.avatar_url || ""} />
+                                <AvatarFallback>{(expert.profiles?.full_name || "E")[0]}</AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0">
+                                <p className="font-semibold text-foreground truncate">{expert.profiles?.full_name || "Expert"}</p>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {expert.markets?.slice(0, 2).map((m) => (
+                                    <Badge key={m} variant="secondary" className="text-xs">{m}</Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                            {expert.headline && (
+                              <p className="mt-3 text-sm text-muted-foreground line-clamp-2">{expert.headline}</p>
+                            )}
+                            <div className="mt-3 flex items-center justify-between text-sm">
+                              <span className="text-primary font-semibold">
+                                {expert.subscription_price ? `$${expert.subscription_price}/mo` : "Free"}
+                              </span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="hidden md:flex -left-4" />
+                <CarouselNext className="hidden md:flex -right-4" />
+              </Carousel>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Latest Insights from DB */}
+      {posts.length > 0 && (
+        <section className="border-t border-border bg-muted/20 py-16 md:py-24">
+          <div className="container">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">Latest Insights</h2>
+                <p className="mt-1 text-muted-foreground">Recent public analysis from experts</p>
+              </div>
+              <Button variant="ghost" className="hidden sm:flex" asChild>
+                <Link to="/insights">View all <ChevronRight className="ml-1 h-4 w-4" /></Link>
+              </Button>
+            </div>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {posts.map((post) => (
+                <Card key={post.id} className="overflow-hidden">
+                  {post.image_url && (
+                    <div className="aspect-video overflow-hidden">
+                      <img src={post.image_url} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={post.profiles?.avatar_url || ""} />
+                        <AvatarFallback>{(post.profiles?.full_name || "E")[0]}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-xs font-medium text-foreground">{post.profiles?.full_name || "Expert"}</span>
+                      {post.market && <Badge variant="secondary" className="text-xs ml-auto">{post.market}</Badge>}
+                    </div>
+                    <p className="text-sm text-foreground line-clamp-3">{post.content}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">{format(new Date(post.created_at), "MMM d, yyyy")}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            <div className="mt-6 flex justify-center sm:hidden">
+              <Button variant="outline" asChild>
+                <Link to="/insights">View all insights <ChevronRight className="ml-1 h-4 w-4" /></Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Marketplace Items from DB */}
+      {marketplaceItems.length > 0 && (
+        <section className="py-16 md:py-24">
+          <div className="container">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">Marketplace</h2>
+                <p className="mt-1 text-muted-foreground">Courses, webinars, and opportunities from experts</p>
+              </div>
+              <Button variant="ghost" className="hidden sm:flex" asChild>
+                <Link to="/marketplace">View all <ChevronRight className="ml-1 h-4 w-4" /></Link>
+              </Button>
+            </div>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {marketplaceItems.map((item) => (
+                <Link key={item.id} to={`/marketplace/${item.id}`}>
+                  <Card className="h-full overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">
+                    {item.image_url && (
+                      <div className="aspect-video overflow-hidden">
+                        <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <CardContent className="p-4">
+                      <Badge variant="secondary" className="text-xs mb-2">{item.type}</Badge>
+                      <h3 className="font-semibold text-foreground text-sm line-clamp-2">{item.title}</h3>
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-primary font-semibold text-sm">{item.price > 0 ? `$${item.price}` : "Free"}</span>
+                        <span className="text-xs text-muted-foreground">{item.profiles?.full_name}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Explore Markets */}
+      <section className="border-t border-border bg-muted/30 py-16 md:py-24">
         <div className="container">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">
-              Explore Markets
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              Find experts specializing in your preferred asset class
-            </p>
+            <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">Explore Markets</h2>
+            <p className="mt-2 text-muted-foreground">Find experts specializing in your preferred asset class</p>
           </div>
-
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {markets.map((market) => (
               <Link key={market.id} to={`/experts?market=${market.id}`}>
-                <Card className="group h-full transition-all duration-300 hover:shadow-large hover:-translate-y-1 hover:border-primary/30">
+                <Card className="group h-full transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/30">
                   <CardContent className="p-6 text-center">
                     <div className="text-4xl">{market.icon}</div>
-                    <h3 className="mt-3 font-display font-semibold text-foreground group-hover:text-primary transition-colors">
-                      {market.name}
-                    </h3>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {market.description}
-                    </p>
+                    <h3 className="mt-3 font-display font-semibold text-foreground group-hover:text-primary transition-colors">{market.name}</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">{market.description}</p>
                     <div className="mt-3 text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                      Browse experts
-                      <ArrowRight className="h-3 w-3" />
+                      Browse experts <ArrowRight className="h-3 w-3" />
                     </div>
                   </CardContent>
                 </Card>
@@ -380,19 +322,11 @@ const Index = () => {
       <section className="border-t border-border bg-primary/5 py-16 md:py-24">
         <div className="container">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">
-              Ready to get started?
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Join thousands of investors discovering market insights from
-              trusted experts.
-            </p>
+            <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">Ready to get started?</h2>
+            <p className="mt-4 text-lg text-muted-foreground">Join thousands of investors discovering market insights from trusted experts.</p>
             <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Button size="lg" className="px-8" asChild>
-                <Link to="/auth?mode=signup">
-                  Create Free Account
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
+                <Link to="/auth?mode=signup">Create Free Account <ArrowRight className="ml-2 h-4 w-4" /></Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
                 <Link to="/experts">Explore Experts</Link>
