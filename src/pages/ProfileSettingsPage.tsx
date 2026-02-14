@@ -6,19 +6,27 @@ import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, Camera } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
+import ImageUpload from "@/components/ImageUpload";
+
+const MARKET_OPTIONS = [
+  { value: "stocks", label: "Stocks", icon: "📈" },
+  { value: "crypto", label: "Crypto", icon: "₿" },
+  { value: "forex", label: "Forex", icon: "💱" },
+  { value: "bonds", label: "Bonds", icon: "📊" },
+  { value: "commodities", label: "Commodities", icon: "🛢️" },
+];
 
 const ProfileSettingsPage = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, userRole, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -28,10 +36,15 @@ const ProfileSettingsPage = () => {
   const [saving, setSaving] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
+  // Expert-specific
+  const [bio, setBio] = useState("");
+  const [credentials, setCredentials] = useState("");
+  const [headline, setHeadline] = useState("");
+  const [selectedMarkets, setSelectedMarkets] = useState<string[]>([]);
+  const [subscriptionPrice, setSubscriptionPrice] = useState("");
+
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
+    if (!authLoading && !user) navigate("/auth");
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
@@ -40,16 +53,22 @@ const ProfileSettingsPage = () => {
 
   const fetchProfile = async () => {
     if (!user) return;
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .maybeSingle();
-
+    const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
     if (data) {
       setFullName(data.full_name || "");
       setUsername(data.username || "");
       setAvatarUrl(data.avatar_url || "");
+    }
+
+    if (userRole === "expert") {
+      const { data: ep } = await supabase.from("expert_profiles").select("*").eq("user_id", user.id).maybeSingle();
+      if (ep) {
+        setBio(ep.bio || "");
+        setCredentials(ep.credentials || "");
+        setHeadline(ep.headline || "");
+        setSelectedMarkets(ep.markets || []);
+        setSubscriptionPrice(ep.subscription_price?.toString() || "0");
+      }
     }
     setLoadingProfile(false);
   };
@@ -58,29 +77,34 @@ const ProfileSettingsPage = () => {
     if (!user) return;
     setSaving(true);
 
-    const { error } = await supabase
+    const { error: profileError } = await supabase
       .from("profiles")
-      .update({
-        full_name: fullName,
-        username,
-        avatar_url: avatarUrl,
-      })
+      .update({ full_name: fullName, username, avatar_url: avatarUrl })
       .eq("id", user.id);
 
-    setSaving(false);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    } else {
-      toast({
-        title: "Profile updated!",
-        description: "Your changes have been saved.",
-      });
+    let expertError = null;
+    if (userRole === "expert") {
+      const { error } = await supabase
+        .from("expert_profiles")
+        .update({
+          bio, credentials, headline,
+          markets: selectedMarkets,
+          subscription_price: parseFloat(subscriptionPrice) || 0,
+        })
+        .eq("user_id", user.id);
+      expertError = error;
     }
+
+    setSaving(false);
+    if (profileError || expertError) {
+      toast({ variant: "destructive", title: "Error", description: (profileError || expertError)?.message });
+    } else {
+      toast({ title: "Profile updated!", description: "Your changes have been saved." });
+    }
+  };
+
+  const toggleMarket = (m: string) => {
+    setSelectedMarkets((prev) => prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]);
   };
 
   if (authLoading || loadingProfile) {
@@ -96,16 +120,12 @@ const ProfileSettingsPage = () => {
   return (
     <Layout>
       <div className="container max-w-2xl py-8 md:py-12">
-        <h1 className="font-display text-3xl font-bold text-foreground mb-8">
-          Profile Settings
-        </h1>
+        <h1 className="font-display text-3xl font-bold text-foreground mb-8">Profile Settings</h1>
 
         <Card>
           <CardHeader>
             <CardTitle>Your Profile</CardTitle>
-            <CardDescription>
-              Update your display picture and personal information
-            </CardDescription>
+            <CardDescription>Update your display picture and personal information</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Avatar */}
@@ -116,65 +136,73 @@ const ProfileSettingsPage = () => {
                   {fullName?.charAt(0) || user?.email?.charAt(0) || "?"}
                 </AvatarFallback>
               </Avatar>
-              <div className="w-full space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Camera className="h-4 w-4" />
-                  Avatar URL
-                </Label>
-                <Input
-                  placeholder="https://example.com/your-photo.jpg"
-                  value={avatarUrl}
-                  onChange={(e) => setAvatarUrl(e.target.value)}
-                />
-                {avatarUrl && (
-                  <p className="text-xs text-muted-foreground">
-                    Preview shown above
-                  </p>
-                )}
-              </div>
+              <ImageUpload value={avatarUrl} onChange={setAvatarUrl} folder="avatars" className="w-full max-w-xs" />
             </div>
 
-            {/* Name & Username */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Full Name</Label>
-                <Input
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Your name"
-                />
+                <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" />
               </div>
               <div className="space-y-2">
                 <Label>Username</Label>
-                <Input
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="@username"
-                />
+                <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@username" />
               </div>
             </div>
 
-            {/* Email (read-only) */}
             <div className="space-y-2">
               <Label>Email</Label>
               <Input value={user?.email || ""} disabled className="bg-muted" />
-              <p className="text-xs text-muted-foreground">
-                Email cannot be changed
-              </p>
+              <p className="text-xs text-muted-foreground">Email cannot be changed</p>
             </div>
 
+            {/* Expert-specific fields */}
+            {userRole === "expert" && (
+              <>
+                <Separator />
+                <h3 className="font-display font-semibold text-foreground">Expert Profile</h3>
+
+                <div className="space-y-2">
+                  <Label>Credentials</Label>
+                  <Input placeholder="e.g. CFA, Former Goldman Sachs" value={credentials} onChange={(e) => setCredentials(e.target.value)} />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Headline</Label>
+                  <Input placeholder="Your current market view in one line" value={headline} onChange={(e) => setHeadline(e.target.value)} />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Bio</Label>
+                  <Textarea placeholder="Tell investors about your experience..." value={bio} onChange={(e) => setBio(e.target.value)} rows={4} />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Markets Covered</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {MARKET_OPTIONS.map((m) => (
+                      <Badge
+                        key={m.value}
+                        variant={selectedMarkets.includes(m.value) ? "default" : "outline"}
+                        className="cursor-pointer transition-colors"
+                        onClick={() => toggleMarket(m.value)}
+                      >
+                        {m.icon} {m.label}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Monthly Subscription Price ($)</Label>
+                  <Input type="number" min="0" step="1" placeholder="0 for free" value={subscriptionPrice} onChange={(e) => setSubscriptionPrice(e.target.value)} />
+                  <p className="text-xs text-muted-foreground">Set to 0 for free access.</p>
+                </div>
+              </>
+            )}
+
             <Button onClick={handleSave} disabled={saving}>
-              {saving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Changes
-                </>
-              )}
+              {saving ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</>) : (<><Save className="mr-2 h-4 w-4" />Save Changes</>)}
             </Button>
           </CardContent>
         </Card>
