@@ -233,9 +233,9 @@ const ExpertsDirectory = () => {
                       <div className="p-5 flex flex-col flex-1">
                         {/* Avatar + Info */}
                         <div className="flex flex-col items-center text-center">
-                          <Avatar className="h-16 w-16 border-2 border-primary/20 ring-2 ring-primary/10 shadow-md">
+                          <Avatar className="h-20 w-20 border-2 border-primary/20 ring-2 ring-primary/10 shadow-md">
                             <AvatarImage src={expert.avatar_url || undefined} alt={expert.full_name || ""} className="object-cover" />
-                            <AvatarFallback className="bg-primary/10 text-primary font-semibold text-lg">
+                            <AvatarFallback className="bg-primary/10 text-primary font-semibold text-2xl">
                               {(expert.full_name || "?").charAt(0)}
                             </AvatarFallback>
                           </Avatar>

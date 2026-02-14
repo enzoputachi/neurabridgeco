@@ -35,8 +35,8 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <img src={logoImage} alt="NeuraBridge" className="h-9 w-auto" />
-          <span className="font-display text-xl font-bold text-foreground">NeuraBridge</span>
+          <img src={logoImage} alt="NeuraBridge" className="h-7 w-auto md:h-9" />
+          <span className="font-display text-lg font-bold text-foreground md:text-xl">NeuraBridge</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -83,13 +83,30 @@ const Header = () => {
           )}
         </div>
 
-        {/* Mobile: hamburger only */}
-        <div className="flex items-center gap-1 md:hidden">
+        {/* Mobile: icons + hamburger */}
+        <div className="flex items-center gap-0.5 md:hidden">
+          {user && (
+            <>
+              <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                <Link to="/messages"><MessageSquare className="h-4 w-4" /></Link>
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" asChild>
+                <Link to="/profile">
+                  <Avatar className="h-6 w-6 border border-border">
+                    <AvatarImage src={avatarUrl || undefined} />
+                    <AvatarFallback className="bg-primary/10 text-primary text-[9px]">
+                      {(fullName || user.email || "?").charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </Link>
+              </Button>
+            </>
+          )}
           <button
-            className="flex items-center justify-center rounded-md p-2"
+            className="flex items-center justify-center rounded-md p-1.5"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {mobileMenuOpen ? <X className="h-6 w-6 text-foreground" /> : <Menu className="h-6 w-6 text-foreground" />}
+            {mobileMenuOpen ? <X className="h-5 w-5 text-foreground" /> : <Menu className="h-5 w-5 text-foreground" />}
           </button>
         </div>
       </div>
