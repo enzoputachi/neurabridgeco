@@ -17,7 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, Plus, FileText, Users, Globe, Lock, Clock, Trash2, X,
-  BarChart3, DollarSign, Star, UserCheck, BookOpen, Video, Zap,
+  BarChart3, DollarSign, Star, UserCheck, BookOpen, Video, Zap, TrendingUp,
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -242,12 +242,12 @@ const ExpertDashboard = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="posts" className="space-y-6">
+        <Tabs defaultValue="analytics" className="space-y-6">
           <TabsList className="flex flex-wrap h-auto gap-1">
+            <TabsTrigger value="analytics"><BarChart3 className="mr-2 h-4 w-4" />Analytics</TabsTrigger>
             <TabsTrigger value="posts"><FileText className="mr-2 h-4 w-4" />Posts</TabsTrigger>
             <TabsTrigger value="courses"><BookOpen className="mr-2 h-4 w-4" />Courses</TabsTrigger>
             <TabsTrigger value="subscribers"><UserCheck className="mr-2 h-4 w-4" />Subscribers</TabsTrigger>
-            <TabsTrigger value="analytics"><BarChart3 className="mr-2 h-4 w-4" />Analytics</TabsTrigger>
           </TabsList>
 
           {/* Posts Tab */}
@@ -453,49 +453,60 @@ const ExpertDashboard = () => {
 
 function AnalyticsSection({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(true);
-  const [subscriberGrowth, setSubscriberGrowth] = useState<any[]>([]);
+  const [growthData, setGrowthData] = useState<any[]>([]);
+  const [earningsData, setEarningsData] = useState<any[]>([]);
   const [ratingBreakdown, setRatingBreakdown] = useState<{ stars: number; count: number }[]>([]);
   const [avgRating, setAvgRating] = useState(0);
   const [totalRatings, setTotalRatings] = useState(0);
-  const [totalLikes, setTotalLikes] = useState(0);
-  const [totalComments, setTotalComments] = useState(0);
+  const [totalEarnings, setTotalEarnings] = useState(0);
 
   useEffect(() => {
     if (!userId) return;
     const fetchAnalytics = async () => {
       setLoading(true);
 
-      // Get all subscriptions for this expert to build growth data
-      const [subsRes, ratingsRes, postsRes] = await Promise.all([
+      // Fetch subscriptions, followers, ratings, and expert profile in parallel
+      const postIdsRes = await supabase.from("posts").select("id").eq("expert_id", userId);
+      const postIds = postIdsRes.data?.map((p: any) => p.id) || [];
+
+      const [subsRes, followersRes, ratingsRes, profileRes] = await Promise.all([
         supabase.from("subscriptions").select("created_at, status").eq("expert_id", userId),
-        supabase.from("post_ratings").select("score, post_id, created_at").in(
-          "post_id",
-          (await supabase.from("posts").select("id").eq("expert_id", userId)).data?.map((p: any) => p.id) || []
-        ),
-        supabase.from("posts").select("id").eq("expert_id", userId),
+        supabase.from("expert_followers").select("created_at").eq("expert_id", userId),
+        postIds.length > 0
+          ? supabase.from("post_ratings").select("score").in("post_id", postIds)
+          : Promise.resolve({ data: [] }),
+        supabase.from("expert_profiles").select("subscription_price").eq("user_id", userId).maybeSingle(),
       ]);
 
-      // Build subscriber growth by month (last 6 months)
       const subs = subsRes.data || [];
+      const followers = followersRes.data || [];
+      const subPrice = profileRes.data?.subscription_price || 0;
+
+      // Build growth + earnings by month (last 6 months)
       const now = new Date();
       const months: any[] = [];
+      const earnings: any[] = [];
       for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const endOfMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0);
         const label = d.toLocaleString("default", { month: "short" });
-        const cumulative = subs.filter(
-          (s) => new Date(s.created_at) <= new Date(d.getFullYear(), d.getMonth() + 1, 0)
+
+        const subCount = subs.filter((s) => new Date(s.created_at) <= endOfMonth).length;
+        const followerCount = followers.filter((f) => new Date(f.created_at) <= endOfMonth).length;
+        // Monthly earnings = active subs at that point * subscription price
+        const activeAtMonth = subs.filter(
+          (s) => new Date(s.created_at) <= endOfMonth && s.status === "active"
         ).length;
-        const active = subs.filter(
-          (s) =>
-            new Date(s.created_at) <= new Date(d.getFullYear(), d.getMonth() + 1, 0) &&
-            s.status === "active"
-        ).length;
-        months.push({ month: label, total: cumulative, active });
+
+        months.push({ month: label, subscribers: subCount, followers: followerCount });
+        earnings.push({ month: label, earnings: activeAtMonth * subPrice });
       }
-      setSubscriberGrowth(months);
+      setGrowthData(months);
+      setEarningsData(earnings);
+      setTotalEarnings(earnings.reduce((a: number, e: any) => a + e.earnings, 0));
 
       // Ratings breakdown
-      const ratings = ratingsRes.data || [];
+      const ratings = (ratingsRes.data as any[]) || [];
       const breakdown = [5, 4, 3, 2, 1].map((s) => ({
         stars: s,
         count: ratings.filter((r: any) => r.score === s).length,
@@ -505,17 +516,6 @@ function AnalyticsSection({ userId }: { userId: string }) {
       setAvgRating(
         ratings.length > 0 ? ratings.reduce((a: number, r: any) => a + r.score, 0) / ratings.length : 0
       );
-
-      // Likes and comments on expert's posts
-      const postIds = postsRes.data?.map((p: any) => p.id) || [];
-      if (postIds.length > 0) {
-        const [likesRes, commentsRes] = await Promise.all([
-          supabase.from("post_likes").select("id").in("post_id", postIds),
-          supabase.from("post_comments").select("id").in("post_id", postIds),
-        ]);
-        setTotalLikes(likesRes.data?.length || 0);
-        setTotalComments(commentsRes.data?.length || 0);
-      }
 
       setLoading(false);
     };
@@ -530,96 +530,97 @@ function AnalyticsSection({ userId }: { userId: string }) {
     );
   }
 
+  const maxRatingCount = Math.max(...ratingBreakdown.map((r) => r.count), 1);
+
   return (
     <>
-      {/* Engagement stats */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <Star className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-foreground">{avgRating.toFixed(1)}</p>
-              <p className="text-xs text-muted-foreground">Avg Rating</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/20">
-              <Zap className="h-5 w-5 text-accent" />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-foreground">{totalRatings}</p>
-              <p className="text-xs text-muted-foreground">Ratings</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
-              <Users className="h-5 w-5 text-success" />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-foreground">{totalLikes}</p>
-              <p className="text-xs text-muted-foreground">Likes</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10">
-              <FileText className="h-5 w-5 text-info" />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-foreground">{totalComments}</p>
-              <p className="text-xs text-muted-foreground">Comments</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charts */}
+      {/* Monthly Earnings + Growth Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Subscriber Growth</CardTitle>
-            <CardDescription>Total and active subscribers over the last 6 months</CardDescription>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg">Monthly Earnings</CardTitle>
+            </div>
+            <CardDescription>Total: ${totalEarnings.toLocaleString()} over 6 months</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={subscriberGrowth}>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={earningsData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis tickFormatter={(v) => `$${v}`} />
+                <Tooltip formatter={(v: number) => [`$${v}`, "Earnings"]} />
+                <Bar dataKey="earnings" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg">Growth</CardTitle>
+            </div>
+            <CardDescription>Subscribers & followers over time</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={growthData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="total" stroke="hsl(var(--primary))" name="Total" />
-                <Line type="monotone" dataKey="active" stroke="hsl(var(--accent))" name="Active" />
+                <Line type="monotone" dataKey="subscribers" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} name="subscribers" />
+                <Line type="monotone" dataKey="followers" stroke="hsl(142 71% 45%)" strokeWidth={2} dot={{ r: 4 }} name="followers" />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Rating Distribution</CardTitle>
-            <CardDescription>{totalRatings} total ratings</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={ratingBreakdown}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="stars" tickFormatter={(v) => `${v}★`} />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
       </div>
+
+      {/* Rating Breakdown */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-2">
+            <Star className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg">Rating Breakdown</CardTitle>
+          </div>
+          <CardDescription>{avgRating.toFixed(1)} average from {totalRatings} ratings</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-8">
+            {/* Big average */}
+            <div className="flex flex-col items-center justify-center shrink-0">
+              <p className="text-5xl font-bold text-foreground">{avgRating.toFixed(1)}</p>
+              <div className="flex mt-1">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star key={s} className={`h-5 w-5 ${s <= Math.round(avgRating) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/30"}`} />
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">{totalRatings} ratings</p>
+            </div>
+
+            {/* Horizontal bars */}
+            <div className="flex-1 space-y-2">
+              {ratingBreakdown.map((r) => (
+                <div key={r.stars} className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground w-12 text-right">{r.stars} star</span>
+                  <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-yellow-500 rounded-full transition-all"
+                      style={{ width: `${(r.count / maxRatingCount) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-sm text-muted-foreground w-8">{r.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </>
   );
 }
