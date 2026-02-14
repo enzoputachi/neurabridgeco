@@ -101,8 +101,8 @@ const Index = () => {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
-        <div className="container relative py-20 md:py-28">
-          <div className="flex flex-col-reverse items-center gap-10 lg:flex-row lg:items-start lg:justify-between">
+        <div className="container relative py-12 md:py-28">
+          <div className="flex flex-col-reverse items-center gap-4 md:gap-10 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-xl text-center lg:text-left lg:pt-8">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5">
                 <Sparkles className="h-4 w-4 text-primary" />
@@ -128,7 +128,7 @@ const Index = () => {
             <div className="relative flex-shrink-0 lg:-mt-6 lg:-mr-4">
               <img src={heroExpert} alt="Market expert" className="h-64 w-auto md:h-80 lg:h-[26rem] object-contain drop-shadow-2xl" />
               {/* Portfolio card */}
-              <div className="absolute -left-4 top-2 sm:-left-8 sm:top-4 lg:-left-12 lg:top-8 animate-fade-in" style={{ animationDelay: "0.3s", animationFillMode: "both" }}>
+              <div className="absolute -left-4 top-2 sm:-left-8 sm:top-4 lg:-left-12 lg:top-8 animate-float-1">
                 <div className="rounded-xl border border-border bg-card/90 backdrop-blur-sm p-2 sm:p-3 shadow-large w-28 sm:w-36 lg:w-44">
                   <div className="flex items-center gap-1.5 sm:gap-2">
                     <div className="flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-success/10">
@@ -147,7 +147,7 @@ const Index = () => {
                 </div>
               </div>
               {/* Top Expert card */}
-              <div className="absolute -right-2 top-1/4 sm:-right-6 sm:top-[30%] lg:-right-8 lg:top-1/3 animate-fade-in" style={{ animationDelay: "0.6s", animationFillMode: "both" }}>
+              <div className="absolute -right-2 top-1/4 sm:-right-6 sm:top-[30%] lg:-right-8 lg:top-1/3 animate-float-2">
                 <div className="rounded-xl border border-border bg-card/90 backdrop-blur-sm p-2 sm:p-3 shadow-large w-26 sm:w-34 lg:w-40">
                   <div className="flex items-center gap-1.5 sm:gap-2">
                     <div className="flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-primary/10">
@@ -162,7 +162,7 @@ const Index = () => {
                 </div>
               </div>
               {/* Markets card */}
-              <div className="absolute -left-2 bottom-2 sm:-left-4 sm:bottom-6 lg:-left-6 lg:bottom-8 animate-fade-in" style={{ animationDelay: "0.9s", animationFillMode: "both" }}>
+              <div className="absolute -left-2 bottom-2 sm:-left-4 sm:bottom-6 lg:-left-6 lg:bottom-8 animate-float-3">
                 <div className="rounded-xl border border-border bg-card/90 backdrop-blur-sm p-2 sm:p-3 shadow-large w-26 sm:w-32 lg:w-36">
                   <div className="flex items-center gap-1.5 sm:gap-2">
                     <div className="flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-warning/10">
