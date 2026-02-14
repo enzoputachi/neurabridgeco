@@ -27,6 +27,7 @@ import {
   Lock,
 } from "lucide-react";
 import { format } from "date-fns";
+import heroExpert from "@/assets/hero-expert.png";
 
 interface ExpertRow {
   user_id: string;
@@ -101,25 +102,30 @@ const Index = () => {
       <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
         <div className="container relative py-20 md:py-28">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Expert Market Insights</span>
+          <div className="flex flex-col-reverse items-center gap-10 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-xl text-center lg:text-left">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-primary">Expert Market Insights</span>
+              </div>
+              <h1 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
+                Discover market experts.{" "}
+                <span className="text-primary">Get insights before the market moves.</span>
+              </h1>
+              <p className="mt-6 text-lg text-muted-foreground md:text-xl">
+                Connect with trusted analysts across stocks, crypto, forex, and more. Subscribe to their insights and stay ahead of market movements.
+              </p>
+              <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row lg:justify-start sm:justify-center">
+                <Button size="lg" className="px-8" asChild>
+                  <Link to="/experts">Browse Experts <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild>
+                  <Link to="/auth?mode=signup&role=expert">Become an Expert</Link>
+                </Button>
+              </div>
             </div>
-            <h1 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
-              Discover market experts.{" "}
-              <span className="text-primary">Get insights before the market moves.</span>
-            </h1>
-            <p className="mt-6 text-lg text-muted-foreground md:text-xl">
-              Connect with trusted analysts across stocks, crypto, forex, and more. Subscribe to their insights and stay ahead of market movements.
-            </p>
-            <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <Button size="lg" className="px-8" asChild>
-                <Link to="/experts">Browse Experts <ArrowRight className="ml-2 h-4 w-4" /></Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link to="/auth?mode=signup&role=expert">Become an Expert</Link>
-              </Button>
+            <div className="flex-shrink-0">
+              <img src={heroExpert} alt="Market expert" className="h-64 w-auto md:h-80 lg:h-96 object-contain drop-shadow-2xl" />
             </div>
           </div>
         </div>
