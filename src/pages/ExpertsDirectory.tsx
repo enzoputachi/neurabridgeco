@@ -229,21 +229,20 @@ const ExpertsDirectory = () => {
                   <Card key={expert.id} className="group overflow-hidden transition-all duration-300 hover:shadow-large hover:-translate-y-1 h-full flex flex-col border-border/60">
                     <CardContent className="p-0 flex flex-col flex-1">
                       {/* Large cover image area */}
-                      <div className="relative h-44 overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
+                      <div className="relative h-44 overflow-hidden bg-muted">
                         {expert.avatar_url ? (
                           <img
                             src={expert.avatar_url}
                             alt={expert.full_name || ""}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
+                          <div className="w-full h-full flex items-center justify-center bg-primary/10">
                             <span className="text-6xl font-bold text-primary/30">
                               {(expert.full_name || "?").charAt(0)}
                             </span>
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-card/80 via-transparent to-transparent" />
                       </div>
 
                       <div className="p-4 flex flex-col flex-1">
