@@ -1,0 +1,1 @@
+ALTER TABLE public.marketplace_items ADD COLUMN detailed_content text DEFAULT NULL;

@@ -54,6 +54,7 @@ interface MarketplaceItemRow {
   price: number;
   image_url: string | null;
   created_at: string;
+  detailed_content: string | null;
 }
 
 const ExpertDashboard = () => {
@@ -85,6 +86,7 @@ const ExpertDashboard = () => {
   const [courseType, setCourseType] = useState("course");
   const [coursePrice, setCoursePrice] = useState("");
   const [courseImage, setCourseImage] = useState("");
+  const [courseDetailedContent, setCourseDetailedContent] = useState("");
   const [creatingCourse, setCreatingCourse] = useState(false);
 
   useEffect(() => {
@@ -171,6 +173,7 @@ const ExpertDashboard = () => {
       expert_id: user.id, title: courseTitle, description: courseDesc,
       type: courseType, price: parseFloat(coursePrice) || 0,
       image_url: courseImage || null,
+      detailed_content: courseDetailedContent.trim() || null,
     });
     setCreatingCourse(false);
     if (error) {
@@ -178,7 +181,7 @@ const ExpertDashboard = () => {
     } else {
       toast({ title: "Course created!" });
       setCourseTitle(""); setCourseDesc(""); setCourseType("course");
-      setCoursePrice(""); setCourseImage(""); setShowCourseForm(false);
+      setCoursePrice(""); setCourseImage(""); setCourseDetailedContent(""); setShowCourseForm(false);
       fetchData();
     }
   };
@@ -407,6 +410,15 @@ const ExpertDashboard = () => {
                   <div className="space-y-2">
                     <Label>Cover Image</Label>
                     <ImageUpload value={courseImage} onChange={setCourseImage} folder="courses" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Detailed Content <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                    <Textarea
+                      placeholder="Add in-depth course details: curriculum outline, learning objectives, prerequisites, schedule, etc. This will appear when users click 'View More'."
+                      value={courseDetailedContent}
+                      onChange={(e) => setCourseDetailedContent(e.target.value)}
+                      rows={6}
+                    />
                   </div>
                   <Button onClick={handleCreateCourse} disabled={creatingCourse || !courseTitle.trim() || !courseDesc.trim()} className="w-full">
                     {creatingCourse ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating...</> : <><Plus className="mr-2 h-4 w-4" />Create</>}
