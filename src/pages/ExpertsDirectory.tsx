@@ -228,26 +228,33 @@ const ExpertsDirectory = () => {
                 return (
                   <Card key={expert.id} className="group overflow-hidden transition-all duration-300 hover:shadow-large hover:-translate-y-1 h-full flex flex-col border-border/60">
                     <CardContent className="p-0 flex flex-col flex-1">
-                      {/* Top accent bar */}
-                      <div className="h-1 bg-gradient-to-r from-primary/40 via-primary to-primary/40" />
-                      <div className="p-5 flex flex-col flex-1">
-                        {/* Large Avatar */}
-                        <div className="flex flex-col items-center text-center">
-                          <Avatar className="h-24 w-24 border-3 border-primary/20 ring-2 ring-primary/10 shadow-lg">
-                            <AvatarImage src={expert.avatar_url || undefined} alt={expert.full_name || ""} />
-                            <AvatarFallback className="bg-primary/10 text-primary font-bold text-3xl">
+                      {/* Large cover image area */}
+                      <div className="relative h-44 overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
+                        {expert.avatar_url ? (
+                          <img
+                            src={expert.avatar_url}
+                            alt={expert.full_name || ""}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span className="text-6xl font-bold text-primary/30">
                               {(expert.full_name || "?").charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <h4 className="mt-3 font-display font-bold text-base text-foreground">{expert.full_name || "Expert"}</h4>
-                          {expert.credentials && (
-                            <p className="text-xs text-muted-foreground mt-0.5">{expert.credentials}</p>
-                          )}
-                        </div>
+                            </span>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-card/80 via-transparent to-transparent" />
+                      </div>
+
+                      <div className="p-4 flex flex-col flex-1">
+                        <h4 className="font-display font-bold text-base text-foreground">{expert.full_name || "Expert"}</h4>
+                        {expert.credentials && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{expert.credentials}</p>
+                        )}
 
                         {/* Markets */}
                         {marketNames.length > 0 && (
-                          <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                          <div className="mt-2 flex flex-wrap gap-1.5">
                             {marketNames.map((market) => (
                               <Badge key={market?.value} variant="secondary" className="text-xs px-2 py-0.5">{market?.icon} {market?.label}</Badge>
                             ))}
@@ -256,11 +263,11 @@ const ExpertsDirectory = () => {
 
                         {/* Headline */}
                         {expert.headline && (
-                          <p className="mt-3 text-sm text-muted-foreground italic text-center line-clamp-2 flex-1">"{expert.headline}"</p>
+                          <p className="mt-2 text-sm text-muted-foreground italic line-clamp-2 flex-1">"{expert.headline}"</p>
                         )}
 
                         {/* Stats */}
-                        <div className="mt-auto pt-3 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                        <div className="mt-auto pt-3 flex items-center gap-4 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <Users className="h-3.5 w-3.5 text-primary" />
                             <span>{expert.subscriber_count}</span>
