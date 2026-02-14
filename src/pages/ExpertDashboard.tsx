@@ -114,20 +114,44 @@ const ExpertDashboard = () => {
   const handleCreatePost = async () => {
     if (!user || !postContent.trim()) return;
     setCreatingPost(true);
-    const { error } = await supabase.from("posts").insert({
+    const { data: newPost, error } = await supabase.from("posts").insert({
       expert_id: user.id, content: postContent, asset: postAsset || null,
       market: postMarket || null, timeframe: postTimeframe || null,
       visibility: postVisibility, image_url: postImageUrl || null,
-    } as any);
+    } as any).select().single();
     setCreatingPost(false);
     if (error) {
       toast({ variant: "destructive", title: "Error", description: error.message });
     } else {
       toast({ title: "Post published!" });
+      // Notify all followers about new post
+      if (newPost) {
+        notifyFollowers(newPost.id, postVisibility);
+      }
       setPostContent(""); setPostAsset(""); setPostMarket(""); setPostTimeframe("");
       setPostVisibility("public"); setPostImageUrl(""); setShowPostForm(false);
       fetchData();
     }
+  };
+
+  const notifyFollowers = async (postId: string, visibility: string) => {
+    if (!user) return;
+    // Get expert's display name
+    const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+    const expertName = profile?.full_name || "An expert";
+
+    // Get all followers
+    const { data: followers } = await supabase.from("expert_followers").select("follower_id").eq("expert_id", user.id);
+    if (!followers || followers.length === 0) return;
+
+    const notifications = followers.map((f) => ({
+      user_id: f.follower_id,
+      title: `${expertName} posted a new ${visibility === "private" ? "exclusive" : "public"} insight`,
+      description: `Click to view the latest insight from ${expertName}`,
+      type: "new_post",
+    }));
+
+    await supabase.from("notifications").insert(notifications);
   };
 
   const handleDeletePost = async (postId: string) => {
@@ -325,7 +349,7 @@ const ExpertDashboard = () => {
                     </div>
                     {post.image_url && (
                       <div className="mt-3 rounded-lg overflow-hidden">
-                        <img src={post.image_url} alt="" className="w-full h-40 object-cover" />
+                        <img src={post.image_url} alt="" className="w-full max-h-60 object-contain bg-muted rounded-lg" />
                       </div>
                     )}
                     <p className="mt-3 text-foreground leading-relaxed text-sm">{post.content}</p>

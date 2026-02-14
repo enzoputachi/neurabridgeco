@@ -81,7 +81,7 @@ const InsightCard = ({ post }: { post: PostWithExpert }) => {
 
         {post.image_url && (
           <div className="mt-4 rounded-lg overflow-hidden">
-            <img src={post.image_url} alt={post.asset || "Insight"} className="w-full h-48 object-cover" loading="lazy" />
+            <img src={post.image_url} alt={post.asset || "Insight"} className="w-full max-h-80 object-contain bg-muted rounded-lg" loading="lazy" />
           </div>
         )}
 
