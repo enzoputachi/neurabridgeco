@@ -67,6 +67,7 @@ const ExpertDashboard = () => {
   const [followerCount, setFollowerCount] = useState(0);
   const [loadingData, setLoadingData] = useState(true);
   const [creatingPost, setCreatingPost] = useState(false);
+  const [activeTab, setActiveTab] = useState("analytics");
 
   // Post form
   const [showPostForm, setShowPostForm] = useState(false);
@@ -185,10 +186,10 @@ const ExpertDashboard = () => {
             <p className="mt-1 text-muted-foreground">Manage your insights, courses, and subscribers</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => setShowPostForm(true)} size="sm">
+            <Button onClick={() => { setShowPostForm(true); setActiveTab("posts"); }} size="sm">
               <Plus className="mr-2 h-4 w-4" />New Post
             </Button>
-            <Button onClick={() => setShowCourseForm(true)} size="sm" variant="outline">
+            <Button onClick={() => { setShowCourseForm(true); setActiveTab("courses"); }} size="sm" variant="outline">
               <Plus className="mr-2 h-4 w-4" />New Course
             </Button>
           </div>
@@ -229,20 +230,10 @@ const ExpertDashboard = () => {
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="flex items-center gap-4 p-4 md:p-6">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10">
-                <BookOpen className="h-5 w-5 text-info" />
-              </div>
-              <div>
-                <p className="text-xl font-bold text-foreground">{courses.length}</p>
-                <p className="text-xs text-muted-foreground">Courses</p>
-              </div>
-            </CardContent>
-          </Card>
+          <EarningsCard userId={user?.id || ""} />
         </div>
 
-        <Tabs defaultValue="analytics" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="analytics"><BarChart3 className="mr-2 h-4 w-4" />Analytics</TabsTrigger>
             <TabsTrigger value="posts"><FileText className="mr-2 h-4 w-4" />Posts</TabsTrigger>
@@ -450,6 +441,37 @@ const ExpertDashboard = () => {
     </Layout>
   );
 };
+
+function EarningsCard({ userId }: { userId: string }) {
+  const [monthlyEarnings, setMonthlyEarnings] = useState(0);
+
+  useEffect(() => {
+    if (!userId) return;
+    const calc = async () => {
+      const [subsRes, profileRes] = await Promise.all([
+        supabase.from("subscriptions").select("id").eq("expert_id", userId).eq("status", "active"),
+        supabase.from("expert_profiles").select("subscription_price").eq("user_id", userId).maybeSingle(),
+      ]);
+      const price = profileRes.data?.subscription_price || 0;
+      setMonthlyEarnings((subsRes.data?.length || 0) * price);
+    };
+    calc();
+  }, [userId]);
+
+  return (
+    <Card>
+      <CardContent className="flex items-center gap-4 p-4 md:p-6">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+          <DollarSign className="h-5 w-5 text-accent" />
+        </div>
+        <div>
+          <p className="text-xl font-bold text-foreground">${monthlyEarnings.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground">Monthly Earnings</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 function AnalyticsSection({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(true);

@@ -328,13 +328,14 @@ const ExpertPage = () => {
             <div className="sticky top-24">
               <Card>
                 <CardContent className="p-6">
-                  <div className="text-center">
-                    <Avatar className="mx-auto h-20 w-20 border-4 border-border ring-4 ring-primary/10">
+                  <div className="flex flex-col items-center">
+                    <Avatar className="h-20 w-20 border-4 border-border ring-4 ring-primary/10">
                       <AvatarImage src={expert.avatar_url || undefined} />
                       <AvatarFallback className="bg-primary/10 text-primary text-2xl font-semibold">{(expert.full_name || "?").charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <h1 className="mt-4 font-display text-2xl font-bold text-foreground">{expert.full_name || "Expert"}</h1>
-                    <p className="mt-1 text-sm text-muted-foreground">{expert.credentials || ""}</p>
+                    <h1 className="mt-3 font-display text-2xl font-bold text-foreground">{expert.full_name || "Expert"}</h1>
+                    {expert.credentials && <p className="mt-0.5 text-sm text-muted-foreground">{expert.credentials}</p>}
+                    {expert.headline && <p className="mt-1 text-sm font-medium text-foreground/80 italic text-center">"{expert.headline}"</p>}
                     {avgRating !== null && (
                       <div className="mt-2 flex items-center justify-center gap-1">
                         <div className="flex gap-0.5">
@@ -347,11 +348,11 @@ const ExpertPage = () => {
                     )}
                   </div>
 
-                  <div className="mt-6 flex flex-wrap justify-center gap-2">
+                  <div className="mt-4 flex flex-wrap justify-center gap-2">
                     {marketNames.map((market) => (<Badge key={market?.value} variant="secondary">{market?.icon} {market?.label}</Badge>))}
                   </div>
 
-                  {expert.bio && <p className="mt-6 text-sm text-muted-foreground leading-relaxed">{expert.bio}</p>}
+                  {expert.bio && <p className="mt-3 text-sm text-muted-foreground leading-relaxed text-center">{expert.bio}</p>}
 
                   <div className="mt-6 grid grid-cols-3 gap-3">
                     <div className="rounded-lg bg-muted/50 p-3 text-center">
