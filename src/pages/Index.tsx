@@ -127,48 +127,50 @@ const Index = () => {
             {/* Hero image + animated finance cards */}
             <div className="relative flex-shrink-0 lg:-mt-6 lg:-mr-4">
               <img src={heroExpert} alt="Market expert" className="h-64 w-auto md:h-80 lg:h-[26rem] object-contain drop-shadow-2xl" />
-              {/* Animated finance cards */}
-              <div className="absolute -left-12 top-8 hidden lg:block animate-fade-in" style={{ animationDelay: "0.3s", animationFillMode: "both" }}>
-                <div className="rounded-xl border border-border bg-card/90 backdrop-blur-sm p-3 shadow-large w-44">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-success/10">
-                      <TrendingUp className="h-4 w-4 text-success" />
+              {/* Portfolio card */}
+              <div className="absolute -left-4 top-2 sm:-left-8 sm:top-4 lg:-left-12 lg:top-8 animate-fade-in" style={{ animationDelay: "0.3s", animationFillMode: "both" }}>
+                <div className="rounded-xl border border-border bg-card/90 backdrop-blur-sm p-2 sm:p-3 shadow-large w-28 sm:w-36 lg:w-44">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <div className="flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-success/10">
+                      <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Portfolio</p>
-                      <p className="text-sm font-bold text-foreground">+24.8%</p>
+                      <p className="text-[8px] sm:text-[10px] text-muted-foreground">Portfolio</p>
+                      <p className="text-xs sm:text-sm font-bold text-foreground">+24.8%</p>
                     </div>
                   </div>
-                  <div className="mt-2 flex gap-0.5">
+                  <div className="mt-1.5 sm:mt-2 flex gap-0.5">
                     {[40, 55, 35, 60, 50, 70, 65, 80, 75, 90].map((h, i) => (
-                      <div key={i} className="flex-1 rounded-sm bg-success/60" style={{ height: `${h * 0.3}px` }} />
+                      <div key={i} className="flex-1 rounded-sm bg-success/60" style={{ height: `${h * 0.2}px` }} />
                     ))}
                   </div>
                 </div>
               </div>
-              <div className="absolute -right-8 top-1/3 hidden lg:block animate-fade-in" style={{ animationDelay: "0.6s", animationFillMode: "both" }}>
-                <div className="rounded-xl border border-border bg-card/90 backdrop-blur-sm p-3 shadow-large w-40">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                      <Star className="h-4 w-4 text-primary" />
+              {/* Top Expert card */}
+              <div className="absolute -right-2 top-1/4 sm:-right-6 sm:top-[30%] lg:-right-8 lg:top-1/3 animate-fade-in" style={{ animationDelay: "0.6s", animationFillMode: "both" }}>
+                <div className="rounded-xl border border-border bg-card/90 backdrop-blur-sm p-2 sm:p-3 shadow-large w-26 sm:w-34 lg:w-40">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <div className="flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-primary/10">
+                      <Star className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Top Expert</p>
-                      <p className="text-sm font-bold text-foreground">4.9 ★</p>
+                      <p className="text-[8px] sm:text-[10px] text-muted-foreground">Top Expert</p>
+                      <p className="text-xs sm:text-sm font-bold text-foreground">4.9 ★</p>
                     </div>
                   </div>
-                  <p className="mt-1.5 text-[10px] text-muted-foreground">2.4k subscribers</p>
+                  <p className="mt-1 sm:mt-1.5 text-[8px] sm:text-[10px] text-muted-foreground">2.4k subscribers</p>
                 </div>
               </div>
-              <div className="absolute -left-6 bottom-8 hidden lg:block animate-fade-in" style={{ animationDelay: "0.9s", animationFillMode: "both" }}>
-                <div className="rounded-xl border border-border bg-card/90 backdrop-blur-sm p-3 shadow-large w-36">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-warning/10">
-                      <Globe className="h-4 w-4 text-warning" />
+              {/* Markets card */}
+              <div className="absolute -left-2 bottom-2 sm:-left-4 sm:bottom-6 lg:-left-6 lg:bottom-8 animate-fade-in" style={{ animationDelay: "0.9s", animationFillMode: "both" }}>
+                <div className="rounded-xl border border-border bg-card/90 backdrop-blur-sm p-2 sm:p-3 shadow-large w-26 sm:w-32 lg:w-36">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <div className="flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-warning/10">
+                      <Globe className="h-3 w-3 sm:h-4 sm:w-4 text-warning" />
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Markets</p>
-                      <p className="text-sm font-bold text-foreground">12 Live</p>
+                      <p className="text-[8px] sm:text-[10px] text-muted-foreground">Markets</p>
+                      <p className="text-xs sm:text-sm font-bold text-foreground">12 Live</p>
                     </div>
                   </div>
                 </div>
