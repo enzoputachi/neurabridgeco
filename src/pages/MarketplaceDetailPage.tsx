@@ -208,6 +208,19 @@ const MarketplaceDetailPage = () => {
               <p className="mt-4 text-muted-foreground leading-relaxed">{item.description}</p>
             </div>
 
+            {/* Detailed Content (optional) */}
+            {item.detailed_content && (
+              <>
+                <Separator />
+                <div>
+                  <h2 className="font-display text-lg font-semibold text-foreground mb-4">Course Details</h2>
+                  <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                    {item.detailed_content}
+                  </div>
+                </div>
+              </>
+            )}
+
             <Separator />
 
             <div>
