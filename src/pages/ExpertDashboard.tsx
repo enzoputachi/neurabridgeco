@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import CourseDetailedForm, { serializeDetailedContent, type CourseDetailedData, EMPTY_DATA } from "@/components/marketplace/CourseDetailedForm";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,7 +87,7 @@ const ExpertDashboard = () => {
   const [courseType, setCourseType] = useState("course");
   const [coursePrice, setCoursePrice] = useState("");
   const [courseImage, setCourseImage] = useState("");
-  const [courseDetailedContent, setCourseDetailedContent] = useState("");
+  const [courseDetailedContent, setCourseDetailedContent] = useState<import("@/components/marketplace/CourseDetailedForm").CourseDetailedData>({ learning_objectives: "", prerequisites: "", curriculum: "", duration: "", target_audience: "" });
   const [creatingCourse, setCreatingCourse] = useState(false);
 
   useEffect(() => {
@@ -173,7 +174,7 @@ const ExpertDashboard = () => {
       expert_id: user.id, title: courseTitle, description: courseDesc,
       type: courseType, price: parseFloat(coursePrice) || 0,
       image_url: courseImage || null,
-      detailed_content: courseDetailedContent.trim() || null,
+      detailed_content: serializeDetailedContent(courseDetailedContent),
     });
     setCreatingCourse(false);
     if (error) {
@@ -181,7 +182,7 @@ const ExpertDashboard = () => {
     } else {
       toast({ title: "Course created!" });
       setCourseTitle(""); setCourseDesc(""); setCourseType("course");
-      setCoursePrice(""); setCourseImage(""); setCourseDetailedContent(""); setShowCourseForm(false);
+      setCoursePrice(""); setCourseImage(""); setCourseDetailedContent({ learning_objectives: "", prerequisites: "", curriculum: "", duration: "", target_audience: "" }); setShowCourseForm(false);
       fetchData();
     }
   };
@@ -411,15 +412,7 @@ const ExpertDashboard = () => {
                     <Label>Cover Image</Label>
                     <ImageUpload value={courseImage} onChange={setCourseImage} folder="courses" />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Detailed Content <span className="text-muted-foreground font-normal">(optional)</span></Label>
-                    <Textarea
-                      placeholder="Add in-depth course details: curriculum outline, learning objectives, prerequisites, schedule, etc. This will appear when users click 'View More'."
-                      value={courseDetailedContent}
-                      onChange={(e) => setCourseDetailedContent(e.target.value)}
-                      rows={6}
-                    />
-                  </div>
+                  <CourseDetailedForm value={courseDetailedContent} onChange={setCourseDetailedContent} />
                   <Button onClick={handleCreateCourse} disabled={creatingCourse || !courseTitle.trim() || !courseDesc.trim()} className="w-full">
                     {creatingCourse ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating...</> : <><Plus className="mr-2 h-4 w-4" />Create</>}
                   </Button>
