@@ -128,7 +128,7 @@ const Index = () => {
             <div className="relative flex-shrink-0 lg:-mt-6 lg:-mr-4">
               <img src={heroExpert} alt="Market expert" className="h-64 w-auto md:h-80 lg:h-[26rem] object-contain drop-shadow-2xl" />
               {/* Portfolio card */}
-              <div className="absolute -left-4 top-2 sm:-left-8 sm:top-4 lg:-left-12 lg:top-8 animate-float-1">
+              <div className="absolute left-0 top-4 sm:-left-2 sm:top-6 lg:-left-4 lg:top-10 animate-float-1">
                 <div className="rounded-xl border border-border bg-card/90 backdrop-blur-sm p-2 sm:p-3 shadow-large w-28 sm:w-36 lg:w-44">
                   <div className="flex items-center gap-1.5 sm:gap-2">
                     <div className="flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-success/10">
@@ -147,7 +147,7 @@ const Index = () => {
                 </div>
               </div>
               {/* Top Expert card */}
-              <div className="absolute -right-2 top-1/4 sm:-right-6 sm:top-[30%] lg:-right-8 lg:top-1/3 animate-float-2">
+              <div className="absolute right-0 top-1/4 sm:-right-2 sm:top-[30%] lg:-right-3 lg:top-1/3 animate-float-2">
                 <div className="rounded-xl border border-border bg-card/90 backdrop-blur-sm p-2 sm:p-3 shadow-large w-26 sm:w-34 lg:w-40">
                   <div className="flex items-center gap-1.5 sm:gap-2">
                     <div className="flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-primary/10">
@@ -162,7 +162,7 @@ const Index = () => {
                 </div>
               </div>
               {/* Markets card */}
-              <div className="absolute -left-2 bottom-2 sm:-left-4 sm:bottom-6 lg:-left-6 lg:bottom-8 animate-float-3">
+              <div className="absolute left-0 bottom-4 sm:-left-1 sm:bottom-8 lg:-left-2 lg:bottom-10 animate-float-3">
                 <div className="rounded-xl border border-border bg-card/90 backdrop-blur-sm p-2 sm:p-3 shadow-large w-26 sm:w-32 lg:w-36">
                   <div className="flex items-center gap-1.5 sm:gap-2">
                     <div className="flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-warning/10">
