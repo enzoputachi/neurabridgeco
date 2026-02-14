@@ -247,6 +247,7 @@ const ExpertDashboard = () => {
             <TabsTrigger value="posts"><FileText className="mr-2 h-4 w-4" />Posts</TabsTrigger>
             <TabsTrigger value="courses"><BookOpen className="mr-2 h-4 w-4" />Courses</TabsTrigger>
             <TabsTrigger value="subscribers"><UserCheck className="mr-2 h-4 w-4" />Subscribers</TabsTrigger>
+            <TabsTrigger value="analytics"><BarChart3 className="mr-2 h-4 w-4" />Analytics</TabsTrigger>
           </TabsList>
 
           {/* Posts Tab */}
@@ -439,10 +440,188 @@ const ExpertDashboard = () => {
           <TabsContent value="subscribers" className="space-y-4">
             <SubscribersListCard userId={user?.id || ""} />
           </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6">
+            <AnalyticsSection userId={user?.id || ""} />
+          </TabsContent>
         </Tabs>
       </div>
     </Layout>
   );
 };
+
+function AnalyticsSection({ userId }: { userId: string }) {
+  const [loading, setLoading] = useState(true);
+  const [subscriberGrowth, setSubscriberGrowth] = useState<any[]>([]);
+  const [ratingBreakdown, setRatingBreakdown] = useState<{ stars: number; count: number }[]>([]);
+  const [avgRating, setAvgRating] = useState(0);
+  const [totalRatings, setTotalRatings] = useState(0);
+  const [totalLikes, setTotalLikes] = useState(0);
+  const [totalComments, setTotalComments] = useState(0);
+
+  useEffect(() => {
+    if (!userId) return;
+    const fetchAnalytics = async () => {
+      setLoading(true);
+
+      // Get all subscriptions for this expert to build growth data
+      const [subsRes, ratingsRes, postsRes] = await Promise.all([
+        supabase.from("subscriptions").select("created_at, status").eq("expert_id", userId),
+        supabase.from("post_ratings").select("score, post_id, created_at").in(
+          "post_id",
+          (await supabase.from("posts").select("id").eq("expert_id", userId)).data?.map((p: any) => p.id) || []
+        ),
+        supabase.from("posts").select("id").eq("expert_id", userId),
+      ]);
+
+      // Build subscriber growth by month (last 6 months)
+      const subs = subsRes.data || [];
+      const now = new Date();
+      const months: any[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const label = d.toLocaleString("default", { month: "short" });
+        const cumulative = subs.filter(
+          (s) => new Date(s.created_at) <= new Date(d.getFullYear(), d.getMonth() + 1, 0)
+        ).length;
+        const active = subs.filter(
+          (s) =>
+            new Date(s.created_at) <= new Date(d.getFullYear(), d.getMonth() + 1, 0) &&
+            s.status === "active"
+        ).length;
+        months.push({ month: label, total: cumulative, active });
+      }
+      setSubscriberGrowth(months);
+
+      // Ratings breakdown
+      const ratings = ratingsRes.data || [];
+      const breakdown = [5, 4, 3, 2, 1].map((s) => ({
+        stars: s,
+        count: ratings.filter((r: any) => r.score === s).length,
+      }));
+      setRatingBreakdown(breakdown);
+      setTotalRatings(ratings.length);
+      setAvgRating(
+        ratings.length > 0 ? ratings.reduce((a: number, r: any) => a + r.score, 0) / ratings.length : 0
+      );
+
+      // Likes and comments on expert's posts
+      const postIds = postsRes.data?.map((p: any) => p.id) || [];
+      if (postIds.length > 0) {
+        const [likesRes, commentsRes] = await Promise.all([
+          supabase.from("post_likes").select("id").in("post_id", postIds),
+          supabase.from("post_comments").select("id").in("post_id", postIds),
+        ]);
+        setTotalLikes(likesRes.data?.length || 0);
+        setTotalComments(commentsRes.data?.length || 0);
+      }
+
+      setLoading(false);
+    };
+    fetchAnalytics();
+  }, [userId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* Engagement stats */}
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <Star className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-foreground">{avgRating.toFixed(1)}</p>
+              <p className="text-xs text-muted-foreground">Avg Rating</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/20">
+              <Zap className="h-5 w-5 text-accent" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-foreground">{totalRatings}</p>
+              <p className="text-xs text-muted-foreground">Ratings</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
+              <Users className="h-5 w-5 text-success" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-foreground">{totalLikes}</p>
+              <p className="text-xs text-muted-foreground">Likes</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10">
+              <FileText className="h-5 w-5 text-info" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-foreground">{totalComments}</p>
+              <p className="text-xs text-muted-foreground">Comments</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Subscriber Growth</CardTitle>
+            <CardDescription>Total and active subscribers over the last 6 months</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={subscriberGrowth}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="total" stroke="hsl(var(--primary))" name="Total" />
+                <Line type="monotone" dataKey="active" stroke="hsl(var(--accent))" name="Active" />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Rating Distribution</CardTitle>
+            <CardDescription>{totalRatings} total ratings</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={ratingBreakdown}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="stars" tickFormatter={(v) => `${v}★`} />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  );
+}
 
 export default ExpertDashboard;
