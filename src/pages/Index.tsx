@@ -102,8 +102,8 @@ const Index = () => {
       <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
         <div className="container relative py-20 md:py-28">
-          <div className="flex flex-col-reverse items-center gap-10 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-xl text-center lg:text-left">
+          <div className="flex flex-col-reverse items-center gap-10 lg:flex-row lg:items-start lg:justify-between">
+            <div className="max-w-xl text-center lg:text-left lg:pt-8">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5">
                 <Sparkles className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium text-primary">Expert Market Insights</span>
@@ -124,8 +124,55 @@ const Index = () => {
                 </Button>
               </div>
             </div>
-            <div className="flex-shrink-0">
-              <img src={heroExpert} alt="Market expert" className="h-64 w-auto md:h-80 lg:h-96 object-contain drop-shadow-2xl" />
+            {/* Hero image + animated finance cards */}
+            <div className="relative flex-shrink-0 lg:-mt-6 lg:-mr-4">
+              <img src={heroExpert} alt="Market expert" className="h-64 w-auto md:h-80 lg:h-[26rem] object-contain drop-shadow-2xl" />
+              {/* Animated finance cards */}
+              <div className="absolute -left-12 top-8 hidden lg:block animate-fade-in" style={{ animationDelay: "0.3s", animationFillMode: "both" }}>
+                <div className="rounded-xl border border-border bg-card/90 backdrop-blur-sm p-3 shadow-large w-44">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-success/10">
+                      <TrendingUp className="h-4 w-4 text-success" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Portfolio</p>
+                      <p className="text-sm font-bold text-foreground">+24.8%</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex gap-0.5">
+                    {[40, 55, 35, 60, 50, 70, 65, 80, 75, 90].map((h, i) => (
+                      <div key={i} className="flex-1 rounded-sm bg-success/60" style={{ height: `${h * 0.3}px` }} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="absolute -right-8 top-1/3 hidden lg:block animate-fade-in" style={{ animationDelay: "0.6s", animationFillMode: "both" }}>
+                <div className="rounded-xl border border-border bg-card/90 backdrop-blur-sm p-3 shadow-large w-40">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                      <Star className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Top Expert</p>
+                      <p className="text-sm font-bold text-foreground">4.9 ★</p>
+                    </div>
+                  </div>
+                  <p className="mt-1.5 text-[10px] text-muted-foreground">2.4k subscribers</p>
+                </div>
+              </div>
+              <div className="absolute -left-6 bottom-8 hidden lg:block animate-fade-in" style={{ animationDelay: "0.9s", animationFillMode: "both" }}>
+                <div className="rounded-xl border border-border bg-card/90 backdrop-blur-sm p-3 shadow-large w-36">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-warning/10">
+                      <Globe className="h-4 w-4 text-warning" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Markets</p>
+                      <p className="text-sm font-bold text-foreground">12 Live</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
