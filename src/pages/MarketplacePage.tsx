@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { usePageSEO } from "@/hooks/usePageSEO";
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +48,11 @@ interface MarketplaceItem {
 }
 
 const MarketplacePage = () => {
+  usePageSEO({
+    title: "Marketplace — Courses, Webinars & Opportunities",
+    description: "Browse educational courses, webinars, and exclusive investment opportunities from top market experts on NeuraBridge.",
+    canonical: "/marketplace",
+  });
   const [items, setItems] = useState<MarketplaceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");

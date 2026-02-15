@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { usePageSEO } from "@/hooks/usePageSEO";
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -103,6 +104,11 @@ const InsightCard = ({ post }: { post: PostWithExpert }) => {
 };
 
 const InsightsPage = () => {
+  usePageSEO({
+    title: "Public Market Insights — Expert Analysis",
+    description: "Explore free public market insights and analysis from verified experts covering stocks, crypto, forex, and more on NeuraBridge.",
+    canonical: "/insights",
+  });
   const [selectedMarket, setSelectedMarket] = useState<string>("all");
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>("all");
   const [posts, setPosts] = useState<PostWithExpert[]>([]);

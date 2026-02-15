@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { usePageSEO } from "@/hooks/usePageSEO";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -78,6 +79,27 @@ const ExpertPage = () => {
   const [ratingCount, setRatingCount] = useState(0);
 
   const isSelf = user?.id === id;
+
+  const expertSeoTitle = expert ? `${expert.full_name || "Expert"} — Market Expert Profile` : "Expert Profile";
+  const expertSeoDesc = expert
+    ? `View ${expert.full_name || "expert"}'s market insights, credentials, and courses on NeuraBridge.${expert.markets?.length ? ` Specializing in ${expert.markets.join(", ")}.` : ""}`
+    : "View expert profile and market insights on NeuraBridge.";
+
+  usePageSEO({
+    title: expertSeoTitle,
+    description: expertSeoDesc,
+    canonical: `/expert/${id}`,
+    ogType: "profile",
+    jsonLd: expert ? {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": expert.full_name || "Expert",
+      "description": expert.bio || expert.headline || "",
+      "url": `https://neurabridgeco.lovable.app/expert/${id}`,
+      "jobTitle": expert.credentials || "Market Expert",
+      ...(expert.avatar_url ? { "image": expert.avatar_url } : {}),
+    } : undefined,
+  });
 
   useEffect(() => { if (id) fetchExpertData(); }, [id, user]);
 
