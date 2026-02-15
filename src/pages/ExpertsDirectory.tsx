@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { usePageSEO } from "@/hooks/usePageSEO";
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +38,11 @@ interface ExpertListItem {
 }
 
 const ExpertsDirectory = () => {
+  usePageSEO({
+    title: "Expert Directory — Browse Market Analysts",
+    description: "Browse and discover verified market experts in stocks, crypto, forex, bonds, and commodities. Find the right analyst to subscribe to on NeuraBridge.",
+    canonical: "/experts",
+  });
   const [experts, setExperts] = useState<ExpertListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");

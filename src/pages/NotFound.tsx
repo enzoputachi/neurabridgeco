@@ -1,8 +1,14 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { usePageSEO } from "@/hooks/usePageSEO";
 
 const NotFound = () => {
   const location = useLocation();
+
+  usePageSEO({
+    title: "Page Not Found",
+    description: "The page you're looking for doesn't exist on NeuraBridge. Browse our experts, insights, and marketplace.",
+  });
 
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);

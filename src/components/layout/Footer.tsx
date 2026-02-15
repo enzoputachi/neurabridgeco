@@ -3,7 +3,7 @@ import { TrendingUp } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="border-t border-border bg-muted/30">
+    <footer className="border-t border-border bg-muted/30" role="contentinfo">
       <div className="container py-12">
         <div className="grid gap-8 md:grid-cols-4">
           {/* Brand */}

@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import heroExpert from "@/assets/hero-expert.png";
+import { usePageSEO } from "@/hooks/usePageSEO";
 
 interface ExpertRow {
   user_id: string;
@@ -64,6 +65,11 @@ interface MarketplaceRow {
 }
 
 const Index = () => {
+  usePageSEO({
+    title: "Connect with Market Experts",
+    description: "Discover trusted market experts across stocks, crypto, forex, and commodities. Subscribe for exclusive insights and educational market analysis on NeuraBridge.",
+    canonical: "/",
+  });
   const [experts, setExperts] = useState<ExpertRow[]>([]);
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [marketplaceItems, setMarketplaceItems] = useState<MarketplaceRow[]>([]);
@@ -98,8 +104,7 @@ const Index = () => {
 
   return (
     <Layout>
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background">
+      <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background" aria-label="Hero">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
         <div className="container relative py-8 md:py-16 lg:py-20">
           <div className="flex flex-col-reverse items-center gap-4 md:gap-10 lg:flex-row lg:items-start lg:justify-between">
