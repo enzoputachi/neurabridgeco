@@ -265,9 +265,9 @@ const MessagesPage = () => {
                           {conv.partnerName.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium text-sm text-foreground">{conv.partnerName}</p>
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-medium text-sm text-foreground truncate">{conv.partnerName}</p>
                           {conv.unread > 0 && (
                             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                               {conv.unread}
