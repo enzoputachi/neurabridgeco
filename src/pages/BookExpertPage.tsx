@@ -52,6 +52,15 @@ const BookExpertPage = () => {
     if (error) {
       toast({ variant: "destructive", title: "Booking failed", description: error.message });
     } else {
+      // Send booking details as a message to the expert
+      const messageContent = `📅 **New 1-on-1 Booking Request**\n\nDate: ${new Date(scheduledAt).toLocaleDateString()}\nTime: ${new Date(scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}\nPrice: ${bookingPrice > 0 ? `$${bookingPrice}` : "Free"}${notes.trim() ? `\nNotes: ${notes.trim()}` : ""}\n\nLooking forward to our session!`;
+
+      await supabase.from("messages").insert({
+        sender_id: user.id,
+        receiver_id: id!,
+        content: messageContent,
+      });
+
       // Notify expert
       await supabase.from("notifications").insert({
         user_id: id!,
