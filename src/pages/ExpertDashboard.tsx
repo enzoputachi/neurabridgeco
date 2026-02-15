@@ -147,14 +147,18 @@ const ExpertDashboard = () => {
     const { data: followers } = await supabase.from("expert_followers").select("follower_id").eq("expert_id", user.id);
     if (!followers || followers.length === 0) return;
 
-    const notifications = followers.map((f) => ({
-      user_id: f.follower_id,
-      title: `${expertName} posted a new ${visibility === "private" ? "exclusive" : "public"} insight`,
-      description: `Click to view the latest insight from ${expertName}`,
-      type: "new_post",
-    }));
+    const followerNotifications = followers
+      .filter((f) => f.follower_id !== user.id)
+      .map((f) => ({
+        user_id: f.follower_id,
+        title: `${expertName} posted a new ${visibility === "private" ? "exclusive" : "public"} insight`,
+        description: `Click to view the latest insight from ${expertName}`,
+        type: "new_post",
+      }));
 
-    await supabase.from("notifications").insert(notifications);
+    if (followerNotifications.length > 0) {
+      await supabase.from("notifications").insert(followerNotifications);
+    }
   };
 
   const handleDeletePost = async (postId: string) => {
