@@ -335,6 +335,15 @@ const ExpertPage = () => {
             <div className="sticky top-24">
               <Card>
                 <CardContent className="p-6">
+                  {/* Follow button top-right */}
+                  {!isSelf && (
+                    <div className="flex justify-end -mt-1 -mr-1 mb-2">
+                      <Button variant={isFollowing ? "secondary" : "outline"} size="sm" onClick={handleFollow}>
+                        <Heart className={`mr-1 h-3.5 w-3.5 ${isFollowing ? "fill-current" : ""}`} />
+                        {isFollowing ? "Following" : "Follow"}
+                      </Button>
+                    </div>
+                  )}
                   <div className="flex flex-col items-center">
                     <Avatar className="h-20 w-20 border-4 border-border ring-4 ring-primary/10">
                       <AvatarImage src={expert.avatar_url || undefined} />
@@ -397,6 +406,7 @@ const ExpertPage = () => {
 
                     {!isSelf && (
                       <>
+                        {/* 1. Subscribe */}
                         {isSubscribed ? (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -425,23 +435,21 @@ const ExpertPage = () => {
                           </Button>
                         )}
 
-                        <Button variant={isFollowing ? "secondary" : "outline"} className="w-full mt-2" onClick={handleFollow}>
-                          <Heart className={`mr-2 h-4 w-4 ${isFollowing ? "fill-current" : ""}`} />
-                          {isFollowing ? "Following" : "Follow"}
-                        </Button>
-
-                        <Button variant="outline" className="w-full mt-2" onClick={handleMessage}>
-                          <MessageSquare className="mr-2 h-4 w-4" />Send Message
-                        </Button>
-
-                        {expert.booking_price != null && expert.booking_price > 0 && (
+                        {/* 2. Book 1-on-1 */}
+                        {expert.booking_price != null && (
                           <Button variant="outline" className="w-full mt-2" onClick={() => {
                             if (!user) { navigate("/auth"); return; }
                             navigate(`/book/${id}`, { state: { expertName: expert.full_name, bookingPrice: expert.booking_price } });
                           }}>
-                            <Calendar className="mr-2 h-4 w-4" />Book 1-on-1 (${expert.booking_price})
+                            <Calendar className="mr-2 h-4 w-4" />
+                            {expert.booking_price > 0 ? `Book 1-on-1 ($${expert.booking_price})` : "Book 1-on-1 (Free)"}
                           </Button>
                         )}
+
+                        {/* 3. Send Message */}
+                        <Button variant="outline" className="w-full mt-2" onClick={handleMessage}>
+                          <MessageSquare className="mr-2 h-4 w-4" />Send Message
+                        </Button>
                       </>
                     )}
 
@@ -453,6 +461,29 @@ const ExpertPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Sticky bottom CTA bar for mobile/tablet */}
+      {!isSelf && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur-sm p-3 lg:hidden">
+          <div className="container flex items-center gap-2">
+            <Button className="flex-1" size="sm" onClick={handleSubscribe}>
+              {isSubscribed ? "Subscribed ✓" : (expert.subscription_price ? `Subscribe $${expert.subscription_price}/mo` : "Subscribe Free")}
+            </Button>
+            {expert.booking_price != null && (
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => {
+                if (!user) { navigate("/auth"); return; }
+                navigate(`/book/${id}`, { state: { expertName: expert.full_name, bookingPrice: expert.booking_price } });
+              }}>
+                <Calendar className="mr-1 h-3.5 w-3.5" />
+                {expert.booking_price > 0 ? `Book $${expert.booking_price}` : "Book Free"}
+              </Button>
+            )}
+            <Button variant="outline" size="icon" className="shrink-0" onClick={handleMessage}>
+              <MessageSquare className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };
