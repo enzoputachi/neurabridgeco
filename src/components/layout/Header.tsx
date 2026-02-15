@@ -87,6 +87,7 @@ const Header = () => {
         <div className="flex items-center gap-0.5 lg:hidden">
           {user && (
             <>
+              <NotificationBell />
               <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                 <Link to="/messages"><MessageSquare className="h-4 w-4" /></Link>
               </Button>

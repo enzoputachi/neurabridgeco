@@ -16,6 +16,7 @@ import MarketplacePage from "./pages/MarketplacePage";
 import MarketplaceDetailPage from "./pages/MarketplaceDetailPage";
 import MessagesPage from "./pages/MessagesPage";
 import ProfileSettingsPage from "./pages/ProfileSettingsPage";
+import BookExpertPage from "./pages/BookExpertPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/marketplace/:id" element={<MarketplaceDetailPage />} />
             <Route path="/messages" element={<MessagesPage />} />
             <Route path="/profile" element={<ProfileSettingsPage />} />
+            <Route path="/book/:id" element={<BookExpertPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
