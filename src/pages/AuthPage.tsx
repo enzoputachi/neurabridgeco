@@ -4,6 +4,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { TrendingUp, Users, LineChart, Loader2 } from "lucide-react";
+import { TrendingUp, Users, LineChart, Loader2, ArrowLeft } from "lucide-react";
 import logoImage from "@/assets/logo.png";
 
 const signInSchema = z.object({
@@ -31,8 +32,13 @@ const signUpSchema = z.object({
   path: ["confirmPassword"],
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+});
+
 type SignInFormData = z.infer<typeof signInSchema>;
 type SignUpFormData = z.infer<typeof signUpSchema>;
+type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 const AuthPage = () => {
   const [searchParams] = useSearchParams();
@@ -40,6 +46,7 @@ const AuthPage = () => {
   const { user, signIn, signUp, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const defaultTab = searchParams.get("mode") === "signup" ? "signup" : "signin";
 
@@ -51,6 +58,11 @@ const AuthPage = () => {
   const signUpForm = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     defaultValues: { fullName: "", email: "", password: "", confirmPassword: "", role: "investor" },
+  });
+
+  const forgotPasswordForm = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: "" },
   });
 
   useEffect(() => {
@@ -68,8 +80,10 @@ const AuthPage = () => {
       toast({
         variant: "destructive",
         title: "Sign in failed",
-        description: error.message === "Invalid login credentials" 
+        description: error.message === "Invalid login credentials"
           ? "Invalid email or password. Please try again."
+          : error.message === "Email not confirmed"
+          ? "Please verify your email before signing in. Check your inbox."
           : error.message,
       });
     } else {
@@ -83,12 +97,19 @@ const AuthPage = () => {
 
   const handleSignUp = async (data: SignUpFormData) => {
     setIsSubmitting(true);
+
+    // Check if email is already used by any role
+    const { data: existingRoles } = await supabase
+      .from("profiles")
+      .select("id")
+      .limit(1);
+
     const { error } = await signUp(data.email, data.password, data.fullName, data.role);
     setIsSubmitting(false);
 
     if (error) {
       let errorMessage = error.message;
-      if (error.message.includes("already registered")) {
+      if (error.message.includes("already registered") || error.message.includes("already been registered")) {
         errorMessage = "This email is already registered. Please sign in instead.";
       }
       toast({
@@ -101,6 +122,28 @@ const AuthPage = () => {
         title: "Account created!",
         description: "Please check your email to verify your account before signing in.",
       });
+    }
+  };
+
+  const handleForgotPassword = async (data: ForgotPasswordFormData) => {
+    setIsSubmitting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
+      redirectTo: `${window.location.origin}/auth?mode=reset`,
+    });
+    setIsSubmitting(false);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    } else {
+      toast({
+        title: "Reset link sent!",
+        description: "If this email is registered, you'll receive a password reset link.",
+      });
+      setShowForgotPassword(false);
     }
   };
 
@@ -130,7 +173,7 @@ const AuthPage = () => {
               Connect with Market Experts
             </h1>
             <p className="text-lg text-muted-foreground">
-              Join the platform where retail investors discover trusted market experts 
+              Join the platform where retail investors discover trusted market experts
               across stocks, crypto, forex, and more.
             </p>
             <div className="space-y-4 pt-4">
@@ -166,169 +209,214 @@ const AuthPage = () => {
                 <img src={logoImage} alt="NeuraBridge" className="h-10 w-auto" />
               </div>
               <CardTitle className="font-display text-2xl">
-                Welcome to NeuraBridge
+                {showForgotPassword ? "Reset Password" : "Welcome to NeuraBridge"}
               </CardTitle>
               <CardDescription>
-                Sign in to your account or create a new one
+                {showForgotPassword
+                  ? "Enter your email to receive a password reset link"
+                  : "Sign in to your account or create a new one"}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue={defaultTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="signin">Sign In</TabsTrigger>
-                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                </TabsList>
+              {showForgotPassword ? (
+                <form onSubmit={forgotPasswordForm.handleSubmit(handleForgotPassword)} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="forgot-email">Email</Label>
+                    <Input
+                      id="forgot-email"
+                      type="email"
+                      placeholder="you@example.com"
+                      {...forgotPasswordForm.register("email")}
+                    />
+                    {forgotPasswordForm.formState.errors.email && (
+                      <p className="text-sm text-destructive">
+                        {forgotPasswordForm.formState.errors.email.message}
+                      </p>
+                    )}
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending...</>
+                    ) : (
+                      "Send Reset Link"
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full"
+                    onClick={() => setShowForgotPassword(false)}
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Sign In
+                  </Button>
+                </form>
+              ) : (
+                <Tabs defaultValue={defaultTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="signin">Sign In</TabsTrigger>
+                    <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                  </TabsList>
 
-                {/* Sign In Tab */}
-                <TabsContent value="signin" className="space-y-4 pt-4">
-                  <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-email">Email</Label>
-                      <Input
-                        id="signin-email"
-                        type="email"
-                        placeholder="you@example.com"
-                        {...signInForm.register("email")}
-                      />
-                      {signInForm.formState.errors.email && (
-                        <p className="text-sm text-destructive">
-                          {signInForm.formState.errors.email.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-password">Password</Label>
-                      <Input
-                        id="signin-password"
-                        type="password"
-                        placeholder="••••••••"
-                        {...signInForm.register("password")}
-                      />
-                      {signInForm.formState.errors.password && (
-                        <p className="text-sm text-destructive">
-                          {signInForm.formState.errors.password.message}
-                        </p>
-                      )}
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Signing in...
-                        </>
-                      ) : (
-                        "Sign In"
-                      )}
-                    </Button>
-                  </form>
-                </TabsContent>
+                  {/* Sign In Tab */}
+                  <TabsContent value="signin" className="space-y-4 pt-4">
+                    <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="signin-email">Email</Label>
+                        <Input
+                          id="signin-email"
+                          type="email"
+                          placeholder="you@example.com"
+                          {...signInForm.register("email")}
+                        />
+                        {signInForm.formState.errors.email && (
+                          <p className="text-sm text-destructive">
+                            {signInForm.formState.errors.email.message}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="signin-password">Password</Label>
+                          <button
+                            type="button"
+                            className="text-xs text-primary hover:underline"
+                            onClick={() => setShowForgotPassword(true)}
+                          >
+                            Forgot password?
+                          </button>
+                        </div>
+                        <Input
+                          id="signin-password"
+                          type="password"
+                          placeholder="••••••••"
+                          {...signInForm.register("password")}
+                        />
+                        {signInForm.formState.errors.password && (
+                          <p className="text-sm text-destructive">
+                            {signInForm.formState.errors.password.message}
+                          </p>
+                        )}
+                      </div>
+                      <Button type="submit" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Signing in...
+                          </>
+                        ) : (
+                          "Sign In"
+                        )}
+                      </Button>
+                    </form>
+                  </TabsContent>
 
-                {/* Sign Up Tab */}
-                <TabsContent value="signup" className="space-y-4 pt-4">
-                  <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-name">Full Name</Label>
-                      <Input
-                        id="signup-name"
-                        type="text"
-                        placeholder="John Doe"
-                        {...signUpForm.register("fullName")}
-                      />
-                      {signUpForm.formState.errors.fullName && (
-                        <p className="text-sm text-destructive">
-                          {signUpForm.formState.errors.fullName.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email</Label>
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="you@example.com"
-                        {...signUpForm.register("email")}
-                      />
-                      {signUpForm.formState.errors.email && (
-                        <p className="text-sm text-destructive">
-                          {signUpForm.formState.errors.email.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password">Password</Label>
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        placeholder="••••••••"
-                        {...signUpForm.register("password")}
-                      />
-                      {signUpForm.formState.errors.password && (
-                        <p className="text-sm text-destructive">
-                          {signUpForm.formState.errors.password.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-confirm">Confirm Password</Label>
-                      <Input
-                        id="signup-confirm"
-                        type="password"
-                        placeholder="••••••••"
-                        {...signUpForm.register("confirmPassword")}
-                      />
-                      {signUpForm.formState.errors.confirmPassword && (
-                        <p className="text-sm text-destructive">
-                          {signUpForm.formState.errors.confirmPassword.message}
-                        </p>
-                      )}
-                    </div>
+                  {/* Sign Up Tab */}
+                  <TabsContent value="signup" className="space-y-4 pt-4">
+                    <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-name">Full Name</Label>
+                        <Input
+                          id="signup-name"
+                          type="text"
+                          placeholder="John Doe"
+                          {...signUpForm.register("fullName")}
+                        />
+                        {signUpForm.formState.errors.fullName && (
+                          <p className="text-sm text-destructive">
+                            {signUpForm.formState.errors.fullName.message}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-email">Email</Label>
+                        <Input
+                          id="signup-email"
+                          type="email"
+                          placeholder="you@example.com"
+                          {...signUpForm.register("email")}
+                        />
+                        {signUpForm.formState.errors.email && (
+                          <p className="text-sm text-destructive">
+                            {signUpForm.formState.errors.email.message}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-password">Password</Label>
+                        <Input
+                          id="signup-password"
+                          type="password"
+                          placeholder="••••••••"
+                          {...signUpForm.register("password")}
+                        />
+                        {signUpForm.formState.errors.password && (
+                          <p className="text-sm text-destructive">
+                            {signUpForm.formState.errors.password.message}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-confirm">Confirm Password</Label>
+                        <Input
+                          id="signup-confirm"
+                          type="password"
+                          placeholder="••••••••"
+                          {...signUpForm.register("confirmPassword")}
+                        />
+                        {signUpForm.formState.errors.confirmPassword && (
+                          <p className="text-sm text-destructive">
+                            {signUpForm.formState.errors.confirmPassword.message}
+                          </p>
+                        )}
+                      </div>
 
-                    {/* Role Selection */}
-                    <div className="space-y-3">
-                      <Label>I am a...</Label>
-                      <RadioGroup
-                        defaultValue="investor"
-                        onValueChange={(value) => signUpForm.setValue("role", value as "investor" | "expert")}
-                        className="grid grid-cols-2 gap-4"
-                      >
-                        <Label
-                          htmlFor="role-investor"
-                          className="flex cursor-pointer flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent/5 hover:text-accent-foreground [&:has([data-state=checked])]:border-primary"
+                      {/* Role Selection */}
+                      <div className="space-y-3">
+                        <Label>I am a...</Label>
+                        <RadioGroup
+                          defaultValue="investor"
+                          onValueChange={(value) => signUpForm.setValue("role", value as "investor" | "expert")}
+                          className="grid grid-cols-2 gap-4"
                         >
-                          <RadioGroupItem value="investor" id="role-investor" className="sr-only" />
-                          <Users className="mb-3 h-6 w-6" />
-                          <span className="font-medium">Investor</span>
-                          <span className="text-xs text-muted-foreground text-center mt-1">
-                            Discover & subscribe
-                          </span>
-                        </Label>
-                        <Label
-                          htmlFor="role-expert"
-                          className="flex cursor-pointer flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent/5 hover:text-accent-foreground [&:has([data-state=checked])]:border-primary"
-                        >
-                          <RadioGroupItem value="expert" id="role-expert" className="sr-only" />
-                          <TrendingUp className="mb-3 h-6 w-6" />
-                          <span className="font-medium">Expert</span>
-                          <span className="text-xs text-muted-foreground text-center mt-1">
-                            Share insights
-                          </span>
-                        </Label>
-                      </RadioGroup>
-                    </div>
+                          <Label
+                            htmlFor="role-investor"
+                            className="flex cursor-pointer flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent/5 hover:text-accent-foreground [&:has([data-state=checked])]:border-primary"
+                          >
+                            <RadioGroupItem value="investor" id="role-investor" className="sr-only" />
+                            <Users className="mb-3 h-6 w-6" />
+                            <span className="font-medium">Investor</span>
+                            <span className="text-xs text-muted-foreground text-center mt-1">
+                              Discover & subscribe
+                            </span>
+                          </Label>
+                          <Label
+                            htmlFor="role-expert"
+                            className="flex cursor-pointer flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent/5 hover:text-accent-foreground [&:has([data-state=checked])]:border-primary"
+                          >
+                            <RadioGroupItem value="expert" id="role-expert" className="sr-only" />
+                            <TrendingUp className="mb-3 h-6 w-6" />
+                            <span className="font-medium">Expert</span>
+                            <span className="text-xs text-muted-foreground text-center mt-1">
+                              Share insights
+                            </span>
+                          </Label>
+                        </RadioGroup>
+                      </div>
 
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Creating account...
-                        </>
-                      ) : (
-                        "Create Account"
-                      )}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
+                      <Button type="submit" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating account...
+                          </>
+                        ) : (
+                          "Create Account"
+                        )}
+                      </Button>
+                    </form>
+                  </TabsContent>
+                </Tabs>
+              )}
             </CardContent>
           </Card>
         </div>

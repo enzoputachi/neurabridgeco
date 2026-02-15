@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          created_at: string
+          expert_id: string
+          id: string
+          investor_id: string
+          notes: string | null
+          scheduled_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expert_id: string
+          id?: string
+          investor_id: string
+          notes?: string | null
+          scheduled_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expert_id?: string
+          id?: string
+          investor_id?: string
+          notes?: string | null
+          scheduled_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_reviews: {
         Row: {
           comment: string | null
@@ -95,6 +143,7 @@ export type Database = {
       expert_profiles: {
         Row: {
           bio: string | null
+          booking_price: number | null
           created_at: string
           credentials: string | null
           headline: string | null
@@ -105,6 +154,7 @@ export type Database = {
         }
         Insert: {
           bio?: string | null
+          booking_price?: number | null
           created_at?: string
           credentials?: string | null
           headline?: string | null
@@ -115,6 +165,7 @@ export type Database = {
         }
         Update: {
           bio?: string | null
+          booking_price?: number | null
           created_at?: string
           credentials?: string | null
           headline?: string | null

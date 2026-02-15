@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Lock, Globe, Clock, TrendingUp, Users, FileText,
   CheckCircle2, Star, BookOpen, Video, Zap, ArrowRight, Heart,
-  MessageSquare, Loader2,
+  MessageSquare, Loader2, Calendar,
 } from "lucide-react";
 import { format } from "date-fns";
 import PostEngagement from "@/components/insights/PostEngagement";
@@ -40,6 +40,7 @@ interface ExpertData {
   headline: string | null;
   markets: string[] | null;
   subscription_price: number | null;
+  booking_price: number | null;
 }
 
 interface PostData {
@@ -99,6 +100,7 @@ const ExpertPage = () => {
         avatar_url: profileRes.data.avatar_url, bio: expertRes.data.bio,
         credentials: expertRes.data.credentials, headline: expertRes.data.headline,
         markets: expertRes.data.markets, subscription_price: expertRes.data.subscription_price,
+        booking_price: (expertRes.data as any).booking_price,
       });
     }
 
@@ -431,6 +433,15 @@ const ExpertPage = () => {
                         <Button variant="outline" className="w-full mt-2" onClick={handleMessage}>
                           <MessageSquare className="mr-2 h-4 w-4" />Send Message
                         </Button>
+
+                        {expert.booking_price != null && expert.booking_price > 0 && (
+                          <Button variant="outline" className="w-full mt-2" onClick={() => {
+                            if (!user) { navigate("/auth"); return; }
+                            navigate(`/book/${id}`, { state: { expertName: expert.full_name, bookingPrice: expert.booking_price } });
+                          }}>
+                            <Calendar className="mr-2 h-4 w-4" />Book 1-on-1 (${expert.booking_price})
+                          </Button>
+                        )}
                       </>
                     )}
 

@@ -42,6 +42,7 @@ const ProfileSettingsPage = () => {
   const [headline, setHeadline] = useState("");
   const [selectedMarkets, setSelectedMarkets] = useState<string[]>([]);
   const [subscriptionPrice, setSubscriptionPrice] = useState("");
+  const [bookingPrice, setBookingPrice] = useState("");
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -49,7 +50,7 @@ const ProfileSettingsPage = () => {
 
   useEffect(() => {
     if (user) fetchProfile();
-  }, [user]);
+  }, [user, userRole]);
 
   const fetchProfile = async () => {
     if (!user) return;
@@ -68,6 +69,7 @@ const ProfileSettingsPage = () => {
         setHeadline(ep.headline || "");
         setSelectedMarkets(ep.markets || []);
         setSubscriptionPrice(ep.subscription_price?.toString() || "0");
+        setBookingPrice((ep as any).booking_price?.toString() || "0");
       }
     }
     setLoadingProfile(false);
@@ -90,6 +92,7 @@ const ProfileSettingsPage = () => {
           bio, credentials, headline,
           markets: selectedMarkets,
           subscription_price: parseFloat(subscriptionPrice) || 0,
+          booking_price: parseFloat(bookingPrice) || 0,
         })
         .eq("user_id", user.id);
       expertError = error;
@@ -197,6 +200,12 @@ const ProfileSettingsPage = () => {
                   <Label>Monthly Subscription Price ($)</Label>
                   <Input type="number" min="0" step="1" placeholder="0 for free" value={subscriptionPrice} onChange={(e) => setSubscriptionPrice(e.target.value)} />
                   <p className="text-xs text-muted-foreground">Set to 0 for free access.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>One-on-One Booking Price ($)</Label>
+                  <Input type="number" min="0" step="1" placeholder="0 to disable" value={bookingPrice} onChange={(e) => setBookingPrice(e.target.value)} />
+                  <p className="text-xs text-muted-foreground">Set a price for investors to book a one-on-one session with you. Set to 0 to disable.</p>
                 </div>
               </>
             )}
