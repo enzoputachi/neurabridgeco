@@ -247,17 +247,17 @@ const MessagesPage = () => {
         <h1 className="font-display text-3xl font-bold text-foreground mb-8">Messages</h1>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          <Card className={`lg:col-span-1 ${selectedThread ? "hidden lg:block" : ""}`}>
-            <CardContent className="p-0">
+          <Card className={`lg:col-span-1 overflow-hidden ${selectedThread ? "hidden lg:block" : ""}`}>
+            <CardContent className="p-0 overflow-hidden">
               {conversations.length > 0 ? (
                 conversations.map((conv) => (
                   <div
                     key={conv.partnerId}
-                    className={`flex items-center gap-3 p-4 border-b border-border last:border-0 hover:bg-muted/50 transition-colors ${selectedThread === conv.partnerId ? "bg-primary/5" : ""}`}
+                    className={`flex items-center gap-3 p-4 border-b border-border last:border-0 hover:bg-muted/50 transition-colors overflow-hidden ${selectedThread === conv.partnerId ? "bg-primary/5" : ""}`}
                   >
                     <button
                       onClick={() => setSelectedThread(conv.partnerId)}
-                      className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                      className="flex items-center gap-3 flex-1 min-w-0 text-left overflow-hidden"
                     >
                       <Avatar className="h-10 w-10 border border-border shrink-0">
                         <AvatarImage src={conv.partnerAvatar || undefined} />
