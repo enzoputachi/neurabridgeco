@@ -66,8 +66,17 @@ const BookExpertPage = () => {
         user_id: id!,
         type: "booking",
         title: "New Booking Request",
-        description: `You have a new one-on-one booking request for ${new Date(scheduledAt).toLocaleDateString()}.`,
+        description: `You have a new one-on-one booking request for ${new Date(scheduledAt).toLocaleDateString()}. Check your messages to continue the conversation.`,
       });
+
+      // Notify the user (investor) that booking is confirmed
+      await supabase.from("notifications").insert({
+        user_id: user.id,
+        type: "booking_confirmed",
+        title: "Booking Confirmed & Sent",
+        description: `Your booking details with ${expertName} have been confirmed and sent. Check your messages to continue the conversation.`,
+      });
+
       setBooked(true);
       toast({ title: "Booking submitted!", description: "The expert will review your request." });
     }
