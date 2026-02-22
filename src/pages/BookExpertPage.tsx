@@ -1,3 +1,5 @@
+// TODO: SEPARATE BUSINESS LOGIC, DB CALLS FROM UI
+
 import { useState } from "react";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -10,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Calendar, CheckCircle2, Loader2 } from "lucide-react";
+import { loadPaystackScript } from "@/lib/loadPaystackScript";
 
 const BookExpertPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +35,35 @@ const BookExpertPage = () => {
     return null;
   }
 
+  // ── Shared: post-payment booking confirmation ─────────────────────────────
+  async function confirmBooking(bookingId: string, scheduledAt: string) {
+    const messageContent = `📅 **New 1-on-1 Booking Request**\n\nDate: ${new Date(scheduledAt).toLocaleDateString()}\nTime: ${new Date(scheduledAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}\nPrice: ${bookingPrice > 0 ? `$${bookingPrice}` : "Free"}${notes.trim() ? `\nNotes: ${notes.trim()}` : ""}\n\nLooking forward to our session!`;
+
+    await Promise.all([
+      supabase.from("messages").insert({
+        sender_id: user.id,
+        receiver_id: id!,
+        content: messageContent,
+      }),
+      supabase.from("notifications").insert({
+        user_id: id!,
+        type: "booking",
+        title: "New Booking Request",
+        description: `You have a new 1-on-1 booking request for ${new Date(scheduledAt).toLocaleDateString()}.`,
+      }),
+      supabase.from("notifications").insert({
+        user_id: user.id,
+        type: "booking_confirmed",
+        title: "Booking Confirmed & Sent",
+        description: `Your booking with ${expertName} has been confirmed. Check your messages.`,
+      }),
+    ]);
+
+    setBooked(true);
+    toast({ title: "Booking submitted!", description: "The expert will review your request." });
+  }
+
+  // ── Main handler ──────────────────────────────────────────────────────────
   const handleBook = async () => {
     if (!date || !time) {
       toast({ variant: "destructive", title: "Please select a date and time" });
@@ -41,48 +73,113 @@ const BookExpertPage = () => {
     setSubmitting(true);
     const scheduledAt = new Date(`${date}T${time}`).toISOString();
 
-    const { error } = await supabase.from("bookings").insert({
-      expert_id: id!,
-      investor_id: user.id,
-      scheduled_at: scheduledAt,
-      notes: notes.trim() || null,
-      status: "pending",
-    });
+    try {
+      // Step 1: Create the booking row (pending)
+      const { data: booking, error: bookingError } = await supabase
+        .from("bookings")
+        .insert({
+          expert_id: id!,
+          investor_id: user.id,
+          scheduled_at: scheduledAt,
+          notes: notes.trim() || null,
+          status: "pending",
+        })
+        .select("id")
+        .single();
 
-    if (error) {
-      toast({ variant: "destructive", title: "Booking failed", description: error.message });
-    } else {
-      // Send booking details as a message to the expert
-      const messageContent = `📅 **New 1-on-1 Booking Request**\n\nDate: ${new Date(scheduledAt).toLocaleDateString()}\nTime: ${new Date(scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}\nPrice: ${bookingPrice > 0 ? `$${bookingPrice}` : "Free"}${notes.trim() ? `\nNotes: ${notes.trim()}` : ""}\n\nLooking forward to our session!`;
+      if (bookingError || !booking) {
+        throw new Error(bookingError?.message ?? "Failed to create booking");
+      }
 
-      await supabase.from("messages").insert({
-        sender_id: user.id,
-        receiver_id: id!,
-        content: messageContent,
+      // ── Free booking — no payment needed ───────────────────────────────
+      if (!bookingPrice || bookingPrice <= 0) {
+        await confirmBooking(booking.id, scheduledAt);
+        setSubmitting(false);
+        return;
+      }
+
+      // ── Paid booking — Paystack popup ──────────────────────────────────
+
+      // Step 2: Create pending payment record
+      const reference = `book_${user.id}_${id}_${Date.now()}`;
+
+      const { error: paymentError } = await supabase.from("payments").insert({
+        investor_id: user.id,
+        expert_id: id!,
+        booking_id: booking.id,
+        amount: bookingPrice * 100, // kobo
+        currency: "NGN",
+        status: "pending",
+        paystack_reference: reference,
       });
 
-      // Notify expert
-      await supabase.from("notifications").insert({
-        user_id: id!,
-        type: "booking",
-        title: "New Booking Request",
-        description: `You have a new one-on-one booking request for ${new Date(scheduledAt).toLocaleDateString()}. Check your messages to continue the conversation.`,
+      if (paymentError) throw new Error(`Failed to record payment: ${paymentError.message}`);
+
+      // Step 3: Load Paystack and open popup
+      await loadPaystackScript();
+
+      const handler = (window as any).PaystackPop.setup({
+        key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+        email: user.email,
+        amount: bookingPrice * 100, // kobo
+        currency: "NGN",
+        ref: reference,
+        metadata: {
+          investor_id: user.id,
+          expert_id: id,
+          booking_id: booking.id,
+        },
+        onSuccess: async (transaction: { reference: string }) => {
+          try {
+            // Step 4: Verify payment via edge function
+            const { data, error } = await supabase.functions.invoke("verify-payment", {
+              body: { reference: transaction.reference },
+            });
+
+            if (error || !data?.success) {
+              toast({
+                title: "Payment issue",
+                description: "Payment received but verification failed. Please contact support.",
+                variant: "destructive",
+              });
+              return;
+            }
+
+            // Step 5: Confirm booking UI + notifications
+            await confirmBooking(booking.id, scheduledAt);
+          } catch {
+            toast({
+              title: "Verification error",
+              description: "Could not verify payment. Please contact support.",
+              variant: "destructive",
+            });
+          }
+        },
+        onCancel: () => {
+          // Clean up the pending booking so it doesn't linger
+          supabase.from("bookings").delete().eq("id", booking.id);
+          supabase.from("payments").update({ status: "failed" }).eq("paystack_reference", reference);
+
+          toast({
+            title: "Payment cancelled",
+            description: "Your booking was not submitted.",
+          });
+        },
       });
 
-      // Notify the user (investor) that booking is confirmed
-      await supabase.from("notifications").insert({
-        user_id: user.id,
-        type: "booking_confirmed",
-        title: "Booking Confirmed & Sent",
-        description: `Your booking details with ${expertName} have been confirmed and sent. Check your messages to continue the conversation.`,
+      handler.openIframe();
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Booking failed",
+        description: err?.message ?? "Something went wrong.",
       });
-
-      setBooked(true);
-      toast({ title: "Booking submitted!", description: "The expert will review your request." });
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
+  // ── Success screen ────────────────────────────────────────────────────────
   if (booked) {
     return (
       <Layout>
@@ -101,10 +198,14 @@ const BookExpertPage = () => {
     );
   }
 
+  // ── Form ──────────────────────────────────────────────────────────────────
   return (
     <Layout>
       <div className="container max-w-lg py-8 md:py-12">
-        <Link to={`/expert/${id}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+        <Link
+          to={`/expert/${id}`}
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+        >
           <ArrowLeft className="h-4 w-4" />Back to {expertName}
         </Link>
 
@@ -115,13 +216,20 @@ const BookExpertPage = () => {
               Book a 1-on-1 Session
             </CardTitle>
             <CardDescription>
-              Schedule a one-on-one session with {expertName} for ${bookingPrice}
+              Schedule a session with {expertName}
+              {bookingPrice > 0 ? ` · $${bookingPrice}` : " · Free"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-lg bg-muted/50 p-4 text-center">
-              <p className="font-display text-2xl font-bold text-foreground">${bookingPrice}</p>
-              <p className="text-xs text-muted-foreground">per session</p>
+              {bookingPrice > 0 ? (
+                <>
+                  <p className="font-display text-2xl font-bold text-foreground">${bookingPrice}</p>
+                  <p className="text-xs text-muted-foreground">per session</p>
+                </>
+              ) : (
+                <p className="font-display text-2xl font-bold text-success">Free</p>
+              )}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -157,14 +265,18 @@ const BookExpertPage = () => {
 
             <Button onClick={handleBook} disabled={submitting} className="w-full" size="lg">
               {submitting ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</>
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
+              ) : bookingPrice > 0 ? (
+                <>Pay & Confirm Booking – ${bookingPrice}</>
               ) : (
-                <>Confirm Booking – ${bookingPrice}</>
+                <>Confirm Booking – Free</>
               )}
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">
-              Payment is handled separately. The expert will confirm your session.
+              {bookingPrice > 0
+                ? "Secure payment via Paystack. The expert will confirm your session."
+                : "The expert will confirm your session."}
             </p>
           </CardContent>
         </Card>
