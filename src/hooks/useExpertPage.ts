@@ -15,7 +15,11 @@ import {
   unfollowExpert,
   subscribeToExpert,
   unsubscribeFromExpert,
+  createPendingSubscription,
+  createPendingPayment,
+  verifyPayment,
 } from "../services/expertPageService";
+import { loadPaystackScript } from "@/lib/loadPaystackScript";
 
 export interface UseExpertPageReturn {
   expert: ExpertData | null;
@@ -51,6 +55,7 @@ export function useExpertPage(id: string | undefined): UseExpertPageReturn {
   const [avgRating, setAvgRating] = useState<number | null>(null);
   const [ratingCount, setRatingCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   const isSelf = user?.id === id;
 
@@ -113,21 +118,108 @@ export function useExpertPage(id: string | undefined): UseExpertPageReturn {
   }
 
   async function handleSubscribe() {
-    if (!user) { navigate("/auth"); return; }
-    if (!id) return;
+  if (!user) { navigate("/auth"); return; }
+  if (!id || !expert) return;
 
-    if (isSubscribed) {
-      await unsubscribeFromExpert(user.id, id);
-      setIsSubscribed(false);
-      setSubscriberCount((c) => c - 1);
-      toast({ title: "Unsubscribed" });
-    } else {
-      await subscribeToExpert(user.id, id);
-      setIsSubscribed(true);
-      setSubscriberCount((c) => c + 1);
-      toast({ title: "Subscribed!", description: "You now have access to private insights." });
-    }
+  // ── Unsubscribe path ──────────────────────────────────────────────────
+  if (isSubscribed) {
+    await unsubscribeFromExpert(user.id, id);
+    setIsSubscribed(false);
+    setSubscriberCount((c) => c - 1);
+    toast({ title: "Unsubscribed" });
+    return;
   }
+
+  // ── Free subscription — no payment needed ─────────────────────────────
+  if (!expert.subscription_price || expert.subscription_price <= 0) {
+    await subscribeToExpert(user.id, id);
+    setIsSubscribed(true);
+    setSubscriberCount((c) => c + 1);
+    toast({ title: "Subscribed!", description: "You now have access to private insights." });
+    return;
+  }
+
+  // ── Paid subscription — open Paystack popup ───────────────────────────
+  setPaymentLoading(true);
+  try {
+    // 1. Create pending subscription row to get an id for the payment FK
+    const subscriptionId = await createPendingSubscription(user.id, id);
+
+    // 2. Generate a unique reference
+    const reference = `sub_${user.id}_${id}_${Date.now()}`;
+
+    // 3. Record pending payment
+    await createPendingPayment(
+      user.id,
+      id,
+      subscriptionId,
+      expert.subscription_price * 100, // store in kobo
+      reference
+    );
+
+    // 4. Load Paystack inline script if not already present
+    await loadPaystackScript();
+
+    // 5. Open Paystack popup
+    const handler = (window as any).PaystackPop.setup({
+      key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+      email: user.email,
+      amount: expert.subscription_price * 100, // kobo
+      currency: "NGN",
+      ref: reference,
+      metadata: {
+        investor_id: user.id,
+        expert_id: id,
+        subscription_id: subscriptionId,
+      },
+      onSuccess: async (transaction: { reference: string }) => {
+        try {
+          // Call verify-payment edge function
+          const result = await verifyPayment(transaction.reference);
+
+          if (result.success && result.paymentStatus === "completed") {
+            setIsSubscribed(true);
+            setSubscriberCount((c) => c + 1);
+            toast({
+              title: "Subscribed! 🎉",
+              description: "You now have access to all private insights.",
+            });
+          } else {
+            toast({
+              title: "Payment issue",
+              description: "Payment received but verification failed. Please contact support.",
+              variant: "destructive",
+            });
+          }
+        } catch (err) {
+          toast({
+            title: "Verification error",
+            description: "Could not verify payment. Please contact support.",
+            variant: "destructive",
+          });
+        }
+      },
+      onCancel: () => {
+        toast({
+          title: "Payment cancelled",
+          description: "Your subscription was not activated.",
+        });
+      },
+    });
+
+    handler.openIframe();
+  } catch (err: any) {
+    toast({
+      title: "Could not start payment",
+      description: err?.message ?? "Something went wrong.",
+      variant: "destructive",
+    });
+  } finally {
+    setPaymentLoading(false);
+  }
+}
+
+// Add to returned object:
 
   function handleMessage() {
     if (!user) { navigate("/auth"); return; }

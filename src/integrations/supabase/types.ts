@@ -321,6 +321,7 @@ export type Database = {
           expert_id: string
           id: string
           investor_id: string
+          marketplace_item_id: string | null
           payment_method: string | null
           paystack_reference: string | null
           status: string
@@ -336,6 +337,7 @@ export type Database = {
           expert_id: string
           id?: string
           investor_id: string
+          marketplace_item_id?: string | null
           payment_method?: string | null
           paystack_reference?: string | null
           status?: string
@@ -351,6 +353,7 @@ export type Database = {
           expert_id?: string
           id?: string
           investor_id?: string
+          marketplace_item_id?: string | null
           payment_method?: string | null
           paystack_reference?: string | null
           status?: string
@@ -377,6 +380,13 @@ export type Database = {
             columns: ["investor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_marketplace_item_id_fkey"
+            columns: ["marketplace_item_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_items"
             referencedColumns: ["id"]
           },
           {
