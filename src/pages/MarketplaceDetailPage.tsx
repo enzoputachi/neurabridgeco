@@ -1,3 +1,5 @@
+// TODO: SEPARATE BUSINESS LOGIC, DB CALLS FROM UI
+
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -11,16 +13,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { loadPaystackScript } from "@/lib/loadPaystackScript";
 import {
-  ArrowLeft,
-  Star,
-  Users,
-  Clock,
-  CheckCircle2,
-  BookOpen,
-  Video,
-  Zap,
-  Loader2,
+  ArrowLeft, Star, Clock, CheckCircle2,
+  BookOpen, Video, Zap, Loader2,
 } from "lucide-react";
 
 const typeConfig: Record<string, { label: string; icon: any; color: string }> = {
@@ -47,6 +43,7 @@ const MarketplaceDetailPage = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
+  const [purchased, setPurchased] = useState(false);
   const [reviewScore, setReviewScore] = useState(0);
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -65,11 +62,7 @@ const MarketplaceDetailPage = () => {
       .eq("id", id)
       .maybeSingle();
 
-    if (!itemData) {
-      setLoading(false);
-      return;
-    }
-
+    if (!itemData) { setLoading(false); return; }
     setItem(itemData);
 
     const [profileRes, expertRes, reviewsRes] = await Promise.all([
@@ -79,16 +72,12 @@ const MarketplaceDetailPage = () => {
     ]);
 
     if (profileRes.data) {
-      setExpert({
-        ...profileRes.data,
-        credentials: expertRes.data?.credentials || null,
-      });
+      setExpert({ ...profileRes.data, credentials: expertRes.data?.credentials || null });
     }
 
     if (reviewsRes.data && reviewsRes.data.length > 0) {
       const userIds = [...new Set(reviewsRes.data.map((r) => r.user_id))];
       const { data: profiles } = await supabase.from("profiles").select("id, full_name").in("id", userIds);
-
       setReviews(
         reviewsRes.data.map((r) => ({
           id: r.id,
@@ -103,21 +92,120 @@ const MarketplaceDetailPage = () => {
     setLoading(false);
   };
 
-  const handlePurchase = () => {
+  // ── Purchase handler ────────────────────────────────────────────────────────
+  const handlePurchase = async () => {
     if (!user) {
       toast({ title: "Sign in required", description: "Please sign in to enroll." });
       return;
     }
-    setPurchasing(true);
-    setTimeout(() => {
-      setPurchasing(false);
-      toast({
-        title: "Purchase Successful!",
-        description: `You've enrolled in "${item?.title}". Check your email for access details.`,
+    if (!item || !id) return;
+
+    // ── Free item — enroll instantly ────────────────────────────────────────
+    if (!item.price || item.price <= 0) {
+      setPurchasing(true);
+      const { error } = await supabase.from("payments").insert({
+        investor_id: user.id,
+        expert_id: item.expert_id,
+        marketplace_item_id: id,
+        amount: 0,
+        currency: "NGN",
+        status: "completed",
+        completed_at: new Date().toISOString(),
       });
-    }, 1500);
+      setPurchasing(false);
+
+      if (error) {
+        toast({ variant: "destructive", title: "Enroll failed", description: error.message });
+      } else {
+        setPurchased(true);
+        toast({ title: "Enrolled!", description: `You now have access to "${item.title}".` });
+      }
+      return;
+    }
+
+    // ── Paid item — Paystack popup ──────────────────────────────────────────
+    setPurchasing(true);
+    try {
+      const reference = `mkt_${user.id}_${id}_${Date.now()}`;
+
+      // Record pending payment
+      const { error: paymentError } = await supabase.from("payments").insert({
+        investor_id: user.id,
+        expert_id: item.expert_id,
+        marketplace_item_id: id,
+        amount: item.price * 100, // kobo
+        currency: "NGN",
+        status: "pending",
+        paystack_reference: reference,
+      });
+
+      if (paymentError) throw new Error(`Failed to record payment: ${paymentError.message}`);
+
+      await loadPaystackScript();
+
+      const handler = (window as any).PaystackPop.setup({
+        key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+        email: user.email,
+        amount: item.price * 100, // kobo
+        currency: "NGN",
+        ref: reference,
+        metadata: {
+          investor_id: user.id,
+          expert_id: item.expert_id,
+          marketplace_item_id: id,
+        },
+        onSuccess: async (transaction: { reference: string }) => {
+          try {
+            const { data, error } = await supabase.functions.invoke("verify-payment", {
+              body: { reference: transaction.reference },
+            });
+
+            if (error || !data?.success) {
+              toast({
+                title: "Payment issue",
+                description: "Payment received but verification failed. Contact support.",
+                variant: "destructive",
+              });
+              return;
+            }
+
+            setPurchased(true);
+            toast({
+              title: "Purchase successful! 🎉",
+              description: `You now have access to "${item.title}".`,
+            });
+          } catch {
+            toast({
+              title: "Verification error",
+              description: "Could not verify payment. Please contact support.",
+              variant: "destructive",
+            });
+          }
+        },
+        onCancel: () => {
+          // Mark payment failed so it doesn't linger as pending
+          supabase
+            .from("payments")
+            .update({ status: "failed" })
+            .eq("paystack_reference", reference);
+
+          toast({ title: "Payment cancelled", description: "You have not been charged." });
+        },
+      });
+
+      handler.openIframe();
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Purchase failed",
+        description: err?.message ?? "Something went wrong.",
+      });
+    } finally {
+      setPurchasing(false);
+    }
   };
 
+  // ── Review handler (unchanged) ──────────────────────────────────────────────
   const handleSubmitReview = async () => {
     if (!user || !id || reviewScore === 0) return;
     setSubmittingReview(true);
@@ -159,9 +247,7 @@ const MarketplaceDetailPage = () => {
       <Layout>
         <div className="container py-16 text-center">
           <h1 className="text-2xl font-bold text-foreground">Item not found</h1>
-          <Button className="mt-6" asChild>
-            <Link to="/marketplace">Back to Marketplace</Link>
-          </Button>
+          <Button className="mt-6" asChild><Link to="/marketplace">Back to Marketplace</Link></Button>
         </div>
       </Layout>
     );
@@ -176,12 +262,8 @@ const MarketplaceDetailPage = () => {
   return (
     <Layout>
       <div className="container py-8 md:py-12">
-        <Link
-          to="/marketplace"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Marketplace
+        <Link to="/marketplace" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+          <ArrowLeft className="h-4 w-4" />Back to Marketplace
         </Link>
 
         <div className="grid gap-8 lg:grid-cols-3">
@@ -195,8 +277,7 @@ const MarketplaceDetailPage = () => {
             <div>
               <div className="flex items-center gap-2 mb-3 flex-wrap">
                 <Badge variant="secondary" className="gap-1">
-                  <TypeIcon className={`h-3 w-3 ${cfg.color}`} />
-                  {cfg.label}
+                  <TypeIcon className={`h-3 w-3 ${cfg.color}`} />{cfg.label}
                 </Badge>
                 {avgRating !== null && (
                   <Badge variant="outline" className="gap-1">
@@ -210,15 +291,13 @@ const MarketplaceDetailPage = () => {
             </div>
 
             <CourseDetailedDisplay detailedContent={item.detailed_content} />
-
             <Separator />
 
-            {/* Reviews Section */}
+            {/* Reviews */}
             <div>
               <h2 className="font-display text-lg font-semibold text-foreground mb-4">
                 Reviews ({reviews.length})
               </h2>
-
               {user && (
                 <Card className="mb-6">
                   <CardContent className="p-4 space-y-3">
@@ -243,7 +322,6 @@ const MarketplaceDetailPage = () => {
                   </CardContent>
                 </Card>
               )}
-
               {reviews.length > 0 ? (
                 <div className="space-y-3">
                   {reviews.map((r) => (
@@ -278,22 +356,32 @@ const MarketplaceDetailPage = () => {
                   ) : (
                     <Badge className="bg-success/10 text-success border-success/20 text-xl px-6 py-2 mx-auto block w-fit">Free</Badge>
                   )}
-                  <Button className="w-full mt-6" size="lg" onClick={handlePurchase} disabled={purchasing}>
-                    {purchasing ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
-                    ) : item.price > 0 ? (
-                      `Enroll for $${item.price}`
-                    ) : (
-                      "Enroll for Free"
-                    )}
-                  </Button>
+
+                  {purchased ? (
+                    <div className="mt-6 flex items-center justify-center gap-2 text-success font-medium">
+                      <CheckCircle2 className="h-5 w-5" />Enrolled
+                    </div>
+                  ) : (
+                    <Button className="w-full mt-6" size="lg" onClick={handlePurchase} disabled={purchasing}>
+                      {purchasing ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
+                      ) : item.price > 0 ? (
+                        `Pay & Enroll – $${item.price}`
+                      ) : (
+                        "Enroll for Free"
+                      )}
+                    </Button>
+                  )}
+
                   <ul className="mt-6 space-y-2 text-sm text-muted-foreground">
                     <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success" />Lifetime access</li>
                     <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success" />Certificate of completion</li>
                     <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success" />30-day money-back guarantee</li>
                     <li className="flex items-center gap-2"><Clock className="h-4 w-4 text-muted-foreground" />Self-paced learning</li>
                   </ul>
-                  <p className="mt-4 text-xs text-center text-muted-foreground">Educational content only. Not financial advice.</p>
+                  <p className="mt-4 text-xs text-center text-muted-foreground">
+                    Educational content only. Not financial advice.
+                  </p>
                 </CardContent>
               </Card>
 
@@ -304,10 +392,14 @@ const MarketplaceDetailPage = () => {
                     <Link to={`/expert/${expert.id}`} className="flex items-center gap-3 group">
                       <Avatar className="h-12 w-12 border-2 border-border">
                         <AvatarImage src={expert.avatar_url || undefined} />
-                        <AvatarFallback className="bg-primary/10 text-primary">{(expert.full_name || "?").charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          {(expert.full_name || "?").charAt(0)}
+                        </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium text-foreground group-hover:text-primary transition-colors">{expert.full_name || "Expert"}</p>
+                        <p className="font-medium text-foreground group-hover:text-primary transition-colors">
+                          {expert.full_name || "Expert"}
+                        </p>
                         <p className="text-xs text-muted-foreground">{expert.credentials || ""}</p>
                       </div>
                     </Link>
