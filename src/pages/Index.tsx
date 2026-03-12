@@ -252,7 +252,7 @@ const Index = () => {
                             )}
                             <div className="mt-3 flex items-center justify-between text-sm">
                               <span className="text-primary font-semibold">
-                                {expert.subscription_price ? `$${expert.subscription_price}/mo` : "Free"}
+                                {expert.subscription_price ? `NGN ${expert.subscription_price}/mo` : "Free"}
                               </span>
                             </div>
                           </CardContent>
@@ -340,7 +340,7 @@ const Index = () => {
                       <Badge variant="secondary" className="text-xs mb-2">{item.type}</Badge>
                       <h3 className="font-semibold text-foreground text-sm line-clamp-2">{item.title}</h3>
                       <div className="mt-2 flex items-center justify-between">
-                        <span className="text-primary font-semibold text-sm">{item.price > 0 ? `$${item.price}` : "Free"}</span>
+                        <span className="text-primary font-semibold text-sm">{item.price > 0 ? `NGN ${item.price}` : "Free"}</span>
                         <span className="text-xs text-muted-foreground">{item.profiles?.full_name}</span>
                       </div>
                     </CardContent>

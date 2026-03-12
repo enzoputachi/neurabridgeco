@@ -37,7 +37,7 @@ const BookExpertPage = () => {
 
   // ── Shared: post-payment booking confirmation ─────────────────────────────
   async function confirmBooking(bookingId: string, scheduledAt: string) {
-    const messageContent = `📅 **New 1-on-1 Booking Request**\n\nDate: ${new Date(scheduledAt).toLocaleDateString()}\nTime: ${new Date(scheduledAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}\nPrice: ${bookingPrice > 0 ? `$${bookingPrice}` : "Free"}${notes.trim() ? `\nNotes: ${notes.trim()}` : ""}\n\nLooking forward to our session!`;
+    const messageContent = `📅 **New 1-on-1 Booking Request**\n\nDate: ${new Date(scheduledAt).toLocaleDateString()}\nTime: ${new Date(scheduledAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}\nPrice: ${bookingPrice > 0 ? `NGN ${bookingPrice}` : "Free"}${notes.trim() ? `\nNotes: ${notes.trim()}` : ""}\n\nLooking forward to our session!`;
 
     await Promise.all([
       supabase.from("messages").insert({

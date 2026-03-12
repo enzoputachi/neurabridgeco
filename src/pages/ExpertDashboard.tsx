@@ -444,7 +444,7 @@ const ExpertDashboard = () => {
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                      <p className="mt-2 font-semibold text-foreground">{c.price > 0 ? `$${c.price}` : "Free"}</p>
+                      <p className="mt-2 font-semibold text-foreground">{c.price > 0 ? `NGN ${c.price}` : "Free"}</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -604,8 +604,8 @@ function AnalyticsSection({ userId }: { userId: string }) {
               <BarChart data={earningsData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
-                <YAxis tickFormatter={(v) => `$${v}`} />
-                <Tooltip formatter={(v: number) => [`$${v}`, "Earnings"]} />
+                <YAxis tickFormatter={(v) => `NGN ${v}`} />
+                <Tooltip formatter={(v: number) => [`NGN ${v}`, "Earnings"]} />
                 <Bar dataKey="earnings" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
