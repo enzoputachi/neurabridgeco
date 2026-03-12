@@ -217,7 +217,7 @@ const BookExpertPage = () => {
             </CardTitle>
             <CardDescription>
               Schedule a session with {expertName}
-              {bookingPrice > 0 ? ` · $${bookingPrice}` : " · Free"}
+              {bookingPrice > 0 ? ` · NGN ${bookingPrice}` : " · Free"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

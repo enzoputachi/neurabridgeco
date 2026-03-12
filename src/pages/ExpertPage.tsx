@@ -390,7 +390,7 @@ const ExpertPage = () => {
                             })}
                           >
                             <Calendar className="mr-2 h-4 w-4" />
-                            {expert.booking_price > 0 ? `Book 1-on-1 ($${expert.booking_price})` : "Book 1-on-1 (Free)"}
+                            {expert.booking_price > 0 ? `Book 1-on-1 (NGN ${expert.booking_price})` : "Book 1-on-1 (Free)"}
                           </Button>
                         )}
 
@@ -420,7 +420,7 @@ const ExpertPage = () => {
               {isSubscribed
                 ? "Subscribed ✓"
                 : expert.subscription_price
-                  ? `Subscribe $${expert.subscription_price}/mo`
+                  ? `Subscribe NGN ${expert.subscription_price}/mo`
                   : "Subscribe Free"}
             </Button>
             {expert.booking_price != null && (
@@ -431,7 +431,7 @@ const ExpertPage = () => {
                 })}
               >
                 <Calendar className="mr-1 h-3.5 w-3.5" />
-                {expert.booking_price > 0 ? `Book $${expert.booking_price}` : "Book Free"}
+                {expert.booking_price > 0 ? `Book NGN ${expert.booking_price}` : "Book Free"}
               </Button>
             )}
             <Button variant="outline" size="icon" className="shrink-0" onClick={handleMessage}>

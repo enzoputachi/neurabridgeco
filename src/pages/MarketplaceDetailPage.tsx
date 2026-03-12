@@ -366,7 +366,7 @@ const MarketplaceDetailPage = () => {
                       {purchasing ? (
                         <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
                       ) : item.price > 0 ? (
-                        `Pay & Enroll – $${item.price}`
+                        `Pay & Enroll – NGN ${item.price}`
                       ) : (
                         "Enroll for Free"
                       )}
