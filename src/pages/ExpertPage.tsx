@@ -223,7 +223,7 @@ const ExpertPage = () => {
                             <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{item.description}</p>
                             <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
                               {item.price > 0
-                                ? <p className="font-display font-semibold text-foreground">${item.price}</p>
+                                ? <p className="font-display font-semibold text-foreground">NGN{item.price}</p>
                                 : <Badge className="bg-success/10 text-success border-success/20">Free</Badge>
                               }
                               <Button variant="ghost" size="sm" className="text-primary" asChild>
@@ -331,7 +331,7 @@ const ExpertPage = () => {
                     <div className="mb-4 text-center">
                       {expert.subscription_price && expert.subscription_price > 0 ? (
                         <p className="font-display text-3xl font-bold text-foreground">
-                          ${expert.subscription_price}
+                          NGN{expert.subscription_price}
                           <span className="text-lg font-normal text-muted-foreground">/month</span>
                         </p>
                       ) : (

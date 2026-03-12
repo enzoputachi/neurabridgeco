@@ -286,7 +286,7 @@ const ExpertsDirectory = () => {
                           <div>
                             {expert.subscription_price && expert.subscription_price > 0 ? (
                               <p className="font-display font-bold text-primary text-lg">
-                                ${expert.subscription_price}<span className="text-sm font-normal text-muted-foreground">/mo</span>
+                                NGN{expert.subscription_price}<span className="text-sm font-normal text-muted-foreground">/mo</span>
                               </p>
                             ) : (
                               <Badge className="bg-success/10 text-success border-success/20 hover:bg-success/20 px-3 py-1">Free</Badge>

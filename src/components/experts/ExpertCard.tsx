@@ -105,7 +105,7 @@ const ExpertCard = ({ expert, variant = "default" }: ExpertCardProps) => {
           <div>
             {expert.subscriptionPrice ? (
               <p className="font-display font-semibold text-foreground">
-                ${expert.subscriptionPrice}
+                NGN{expert.subscriptionPrice}
                 <span className="text-sm font-normal text-muted-foreground">/month</span>
               </p>
             ) : (
